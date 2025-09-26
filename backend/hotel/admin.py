@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import (Rol, Usuario, Habitacion, Reserva, Pagos, Reporte)
+from .models import (Rol, Usuario, Habitacion, Reserva, Pagos, Reporte, Comentario)
 
 admin.site.register(Rol)
 admin.site.register(Usuario)
@@ -7,3 +7,4 @@ admin.site.register(Habitacion)
 admin.site.register(Reserva)
 admin.site.register(Pagos)
 admin.site.register(Reporte)
+admin.site.register(Comentario)

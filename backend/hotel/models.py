@@ -61,3 +61,13 @@ class Reporte(models.Model):
     datos = models.JSONField()
     def __str__(self):
         return self.tipo
+    
+class Comentario(models.Model):
+    id = models.AutoField(primary_key=True)
+    id_usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
+    id_habitacion = models.ForeignKey(Habitacion, on_delete=models.CASCADE)
+    comentario = models.CharField(max_length=255, unique=False)
+    calificacion = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return self.comentario

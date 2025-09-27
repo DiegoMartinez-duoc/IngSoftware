@@ -1,0 +1,68 @@
+.empleado-container {
+  height: 100vh;
+  width: 100vw;
+  background-color: #B0DADA; /* Color ligeramente distinto para diferenciar */
+  margin: 0;
+  overflow-x: hidden;
+  position: absolute;
+  top: 20px;
+  left: 0px;
+  
+  display: flex;
+  align-items: center; 
+  justify-content: center; 
+}
+
+.gran-wrapper {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 70px;
+  background-color: #E8E8E8;
+  width: 1200px; /* más estrecho para contener inputs y listas */
+  min-height: 500px;
+  padding: 20px;
+  border-radius: 10px; 
+}
+
+.texto {
+  color: black;
+  font-size: 24px;
+  margin-bottom: 15px;
+}
+
+input, select, button {
+  margin: 5px 0;
+  padding: 8px 12px;
+  border-radius: 5px;
+  border: 1px solid #999;
+  font-size: 16px;
+}
+
+button {
+  background-color: #4CAF50;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+.error {
+  color: red;
+  margin-top: 10px;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 10px;
+}
+
+li {
+  background-color: #f0f0f0;
+  margin-bottom: 5px;
+  padding: 8px;
+  border-radius: 5px;
+}

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """
 Django settings for hotel_pacific_reef project.
 
@@ -10,6 +11,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+=======
+>>>>>>> ee26b58 (Modificado reservaCliente.js, añadido reservaEmpleado.js, AdminPanel.js,Empleado.css, Admin.css)
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -44,9 +47,15 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
+<<<<<<< HEAD
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+=======
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+>>>>>>> ee26b58 (Modificado reservaCliente.js, añadido reservaEmpleado.js, AdminPanel.js,Empleado.css, Admin.css)
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -125,6 +134,10 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> ee26b58 (Modificado reservaCliente.js, añadido reservaEmpleado.js, AdminPanel.js,Empleado.css, Admin.css)
 CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOW_CREDENTIALS = True

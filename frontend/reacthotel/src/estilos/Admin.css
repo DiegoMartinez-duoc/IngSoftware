@@ -1,0 +1,36 @@
+.admin-container {
+  height: 100vh;
+  width: 100vw;
+  background-color: #D9D9D9;
+  margin: 0;
+  overflow-x: hidden;
+  display: flex;
+  align-items: center; 
+  justify-content: center; 
+  position: relative;
+  top: 20px;
+}
+
+.gran-wrapper {
+  display: flex;
+  flex-direction: column;
+  background-color: #E0E0E0;
+  width: 1200px;
+  min-height: 500px;
+  padding: 20px;
+  border-radius: 10px; 
+}
+
+.texto {
+  color: black;
+}
+
+.error {
+  color: red;
+  margin-top: 10px;
+}
+
+.success {
+  color: green;
+  margin-top: 10px;
+}

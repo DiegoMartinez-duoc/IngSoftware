@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import logo1 from './img/logo1.svg';
 import Login from "./componentes/Login";
 import InicioCliente from "./componentes/InicioCliente";
 import ReservasCliente from "./componentes/reservasCliente";
@@ -36,12 +37,10 @@ function App() {
             </div>
         </div>
         
-        <div className="logo-container">
-          <h2 id="logo-central">
-            <span className="logo">Hotel Pacific Reef</span>
-          </h2>
-        </div>
-        
+       <div className="logo-container">
+        <img src={logo1} alt="Hotel Pacific Reef" className="logo-img" />
+      </div>
+              
         <div className="right-nav">
         </div>
       </header>

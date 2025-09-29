@@ -1,0 +1,19 @@
+<svg width="280" height="80" viewBox="0 0 280 80" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fondo opcional (puedes quitarlo si quieres transparente) -->
+  <!-- <rect width="280" height="80" rx="12" fill="#49AFE2"/> -->
+
+  <!-- Olas -->
+  <path d="M0 60 Q20 40 40 60 T80 60 T120 60 T160 60 T200 60 T240 60 T280 60 V80 H0 Z" 
+        fill="#49AFE2" opacity="0.85"/>
+
+  <!-- Sol sobre las olas -->
+  <circle cx="230" cy="28" r="16" fill="#FDB813"/>
+
+  <!-- Texto -->
+  <text x="20" y="45" font-family="Segoe UI, sans-serif" font-weight="700" font-size="20" fill="#ffffffff">
+    Hotel
+  </text>
+  <text x="20" y="70" font-family="Segoe UI, sans-serif" font-weight="700" font-size="24" fill="#eef3f6ff">
+    Pacific Reef
+  </text>
+</svg>

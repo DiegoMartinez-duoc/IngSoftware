@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200">
+  <style>
+    text { font-family: 'Segoe UI', sans-serif; font-weight: 700; fill: #ffffff; }
+    .icon { fill: #ffffff; }
+  </style>
+  
+  <!-- Isotipo -->
+  <circle cx="80" cy="100" r="70" stroke="#ffffff" stroke-width="6" fill="none"/>
+  <circle cx="115" cy="70" r="20" class="icon"/>
+  <path d="M40 130c15-10 30-10 45 0s30 10 45 0s30-10 45 0" stroke="#ffffff" stroke-width="6" fill="none"/>
+  <rect x="30" y="130" width="100" height="40" class="icon"/>
+  <path d="M80 60c-4 20-6 40-5 70c3 3 9 3 12 0c-2-30 0-50 5-70z" class="icon"/>
+  <path d="M90 60c15-15 35-20 50-20c-15 10-30 15-45 20z" class="icon"/>
+  <path d="M70 60c-15-15-35-20-50-20c15 10 30 15 45 20z" class="icon"/>
+  <path d="M85 55c10-15 25-22 40-25c-12 10-22 15-35 20z" class="icon"/>
+  <path d="M75 55c-10-15-25-22-40-25c12 10 22 15 35 20z" class="icon"/>
+
+  <!-- Texto -->
+  <text x="180" y="80" font-size="40">Hotel</text>
+  <text x="180" y="130" font-size="52">Pacific</text>
+  <text x="180" y="180" font-size="52">Reef</text>
+</svg>

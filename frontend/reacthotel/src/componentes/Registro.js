@@ -63,7 +63,7 @@ const Registro = ({ onViewChange }) => {
 
   return (
     <div className="login-container">
-      <div className="wrapper">
+      <div className="wrapper2">
 
         <h2 className="text-center">Por favor, registrate para acceder a nuestros servicios</h2>
         <form onSubmit={handleSubmit} id="registro-formulario" className="validacion" noValidate>

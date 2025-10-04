@@ -1,6 +1,6 @@
 /* CONTENEDOR DE FONDO (con imagen y overlay) */
 .login-container {
-  min-height: 100vh;
+  min-height: 74vh;
   width: 100%;
   margin: 0;
   position: relative;
@@ -11,7 +11,7 @@
   background: url('../img/vestibulo.svg') center / cover no-repeat fixed, #9fceb4;
 
   display: grid;
-  place-items: center;
+  place-items: flex-start;
   padding: clamp(24px, 4vw, 48px);
 }
 

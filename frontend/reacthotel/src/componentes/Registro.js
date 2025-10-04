@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import '../estilos/Registro.css'; 
+import '../estilos/Registro.css';
 
 const Registro = ({ onViewChange }) => {
   const [formData, setFormData] = useState({
@@ -12,28 +12,18 @@ const Registro = ({ onViewChange }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevState => ({
-      ...prevState,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (error) setError(null);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    console.log('Datos del formulario:', formData);
 
-    fetchData();
- 
-    if (!formData.email || !formData.contrasena) {
+    if (!formData.email || !formData.contrasena || !formData.nombre || !formData.telefono) {
       setError('Por favor, complete todos los campos');
-    } else {
-      setError(null);
-     
+      return;
     }
-  };
 
-  const fetchData = () => {
     fetch("http://localhost:8000/hotel/registro/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -41,88 +31,88 @@ const Registro = ({ onViewChange }) => {
     })
       .then(res => res.json())
       .then(response => {
-
-        const data = response.nombre;
-        console.log('Registro exitoso:', data);
-        
+        console.log('Registro exitoso:', response?.nombre);
         handleGoToInicioCliente();
       })
-      .catch(error => {
-        console.error("Error:", error);
-        
+      .catch(err => {
+        console.error("Error:", err);
+        setError('No se pudo registrar. Intente nuevamente.');
       });
   };
 
-  const handleGoToLogin = () => {
-    onViewChange("login");
-  };
-
-  const handleGoToInicioCliente = () => {
-    onViewChange("inicioCliente");
-  };
+  const handleGoToLogin = () => onViewChange("login");
+  const handleGoToInicioCliente = () => onViewChange("inicioCliente");
 
   return (
     <div className="login-container">
       <div className="wrapper2">
+        <h2 className="text-center">Por favor, regístrate para acceder a nuestros servicios</h2>
 
-        <h2 className="text-center">Por favor, registrate para acceder a nuestros servicios</h2>
         <form onSubmit={handleSubmit} id="registro-formulario" className="validacion" noValidate>
           <div className="primera-linea">
-            <input 
-              name="email" 
-              type="email" 
-              className="formulario" 
-              id="email-input" 
-              placeholder={error ? "Correo invalido" : "Ingresa tu email"} 
+            <input
+              name="email"
+              type="email"
+              className="formulario"
+              id="email-input"
+              placeholder={error ? "Correo inválido" : "Ingresa tu email"}
               value={formData.email}
               onChange={handleChange}
-              required 
+              required
+              autoComplete="email"
             />
           </div>
+
           <div className="segunda-linea">
-            <input 
-              name="contrasena" 
-              type="password" 
-              className="formulario" 
-              id="contrasena-input" 
-              placeholder="Ingresa tu contraseña" 
+            <input
+              name="contrasena"
+              type="password"
+              className="formulario"
+              id="contrasena-input"
+              placeholder="Ingresa tu contraseña"
               value={formData.contrasena}
               onChange={handleChange}
-              required 
+              required
+              autoComplete="new-password"
             />
           </div>
+
           <div className="tercera-linea">
-            <input 
-              name="nombre" 
-              type="text" 
-              className="formulario" 
-              id="nombre-input" 
-              placeholder="Ingresa tu nombre" 
+            <input
+              name="nombre"
+              type="text"
+              className="formulario"
+              id="nombre-input"
+              placeholder="Ingresa tu nombre"
               value={formData.nombre}
               onChange={handleChange}
-              required 
+              required
             />
           </div>
+
           <div className="cuarta-linea">
-            <input 
-              name="telefono" 
-              type="tel" 
-              className="formulario" 
-              id="telefono-input" 
-              placeholder="Ingresa tu telefono" 
+            <input
+              name="telefono"
+              type="tel"
+              className="formulario"
+              id="telefono-input"
+              placeholder="Ingresa tu teléfono"
               value={formData.telefono}
               onChange={handleChange}
-              required 
+              required
             />
           </div>
+
+          {error && <p className="feedback" role="alert">{error}</p>}
+
           <div className="boton">
             <button type="submit" className="registrar">REGISTRAR</button>
           </div>
         </form>
 
-        <h7 className="ir-login">
+        <p className="ir-login">
           ¿Ya tienes una cuenta? Ingresa <span id="login" onClick={handleGoToLogin}>aquí</span>
-        </h7>
+        </p>
       </div>
     </div>
   );

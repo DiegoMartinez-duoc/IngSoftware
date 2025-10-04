@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "../estilos/Empleado.css";
 
-const ReservasEmpleado = ({ onLogout }) => {
-  const [step, setStep] = useState(1);
-  const [reservas, setReservas] = useState([]);
+const CatalogoEmpleado = ({ onLogout }) => {
   const [habitaciones, setHabitaciones] = useState([]);
   const [formData, setFormData] = useState({
     fechaInicio: "",
@@ -18,7 +16,7 @@ const ReservasEmpleado = ({ onLogout }) => {
   const [successMessage, setSuccessMessage] = useState("");
   const [habitacionSeleccionada, setHabitacionSeleccionada] = useState(null);
 
-  const prevStep = () => setStep(step - 1);
+ 
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -45,29 +43,6 @@ const ReservasEmpleado = ({ onLogout }) => {
     fetchHabitaciones();
   }, []);
 
-  // --------------------------
-  // Consultar reservas
-  // --------------------------
-  const fetchReservas = async () => {
-    if (!formData.fechaInicio || !formData.fechaFin) {
-      setError("Debe seleccionar ambas fechas");
-      return;
-    }
-    try {
-      const res = await fetch(
-        `http://localhost:8000/hotel/reservas/?inicio=${formData.fechaInicio}&fin=${formData.fechaFin}`
-      );
-      const data = await res.json();
-      if (data.success) {
-        setReservas(data.reservas);
-        setError("");
-      } else {
-        setError(data.error || "Error al cargar reservas");
-      }
-    } catch (err) {
-      setError("Error de conexión con backend");
-    }
-  };
 
   // --------------------------
   // Reservar para un cliente
@@ -119,126 +94,218 @@ const ReservasEmpleado = ({ onLogout }) => {
       <div className="reserva-wrapper">
         {/* <h2 className="texto">Panel de Reservas (Empleado) - Paso {step}</h2> */}
 
-       
-          <div className="ver-reservas-grid">
-            {/* IZQUIERDA */}
-            <div className="ver-reservas-izquierda">
-              <h3>Habitaciones reservadas este mes</h3>
-              <ul className="historial-reservas">
-                {reservas.length === 0 ? (
-                  <li className="reserva-item">
+        {!habitacionSeleccionada && (
+          <div className="habitaciones-layout">
+            {/* BLOQUE: Habitaciones recomendadas */}
+            <div className="habitaciones-recomendadas">
+              <h3>Habitaciones recomendadas para clientes</h3>
+              <div className="habitaciones-grid" style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: "20px"
+              }}>
+                {habitaciones.length === 0 ? (
+                  <div className="habitacion-card" style={{ border: "1px solid #ccc", borderRadius: "10px", padding: "10px" }}>
                     <img
                       src="/img/habitacion-default.jpg"
                       alt="Habitación predeterminada"
-                      className="miniatura-habitacion"
-                      style={{ width: "64px", height: "48px", objectFit: "cover", marginRight: "10px" }}
+                      style={{ width: "100%", height: "200px", objectFit: "cover", borderRadius: "8px" }}
                     />
-                    <div>
-                      <strong>Título de la habitación</strong> <br />
-                      Cliente: Nombre del cliente <br />
-                      Hab: Tipo de habitación - Estado: Estado
+                    <div style={{ marginTop: "10px", textAlign: "center" }}>
+                      <p>🛏 Precio</p>
+                      <small>Título de la habitación</small>
+                      <br />
+                      <button
+                        style={{ marginTop: "10px" }}
+                        onClick={() => setHabitacionSeleccionada({})}
+                      >Ver</button>
                     </div>
-                  </li>
+                  </div>
                 ) : (
-                  reservas.map((r) => (
-                    <li key={r.id} className="reserva-item">
+                  habitaciones.slice(0, 3).map((h) => (
+                    <div key={h.id} className="habitacion-card" style={{ border: "1px solid #ccc", borderRadius: "10px", padding: "10px" }}>
                       <img
-                        src={`http://localhost:8000/media/${r.imagen}`}
-                        alt={r.habitacion}
-                        className="miniatura-habitacion"
+                        src={`http://localhost:8000/media/${h.imagen}`}
+                        alt={h.nombre}
+                        style={{ width: "60px", height: "60px", objectFit: "cover", borderRadius: "8px" }}
                       />
-                      <div>
-                        <strong>{r.habitacion || "Título de la habitación"}</strong> <br />
-                        Cliente: {r.cliente || "Nombre del cliente"} <br />
-                        Hab: {r.habitacion_tipo || "Tipo de habitación"} - Estado: {r.estado || "Estado"}
+                      <div style={{ marginTop: "10px", textAlign: "center" }}>
+                        <p>🛏 {h.precio ? `$${h.precio}` : "Precio"}</p>
+                        <small>{h.nombre || "Título de la habitación"}</small>
+                        <br />
+                        <button onClick={() => setHabitacionSeleccionada(h)} style={{ marginTop: "10px" }}>Ver</button>
                       </div>
-                    </li>
+                    </div>
                   ))
                 )}
-              </ul>
+              </div>
+            </div>
 
-              <h4>Catálogo de habitaciones</h4>
-              <ul>
-                {habitaciones.length === 0 ? (
-                  <li style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <img
-                      src="/img/habitacion-icono.png"
-                      alt="Icono de habitación"
-                      style={{ width: "32px", height: "32px" }}
-                    />
-                    <span>
-                      <strong>Precio</strong> - Título de la habitación
-                    </span>
-                    <button style={{ marginLeft: "8px" }} disabled>Ver</button>
-                  </li>
-                ) : (
-                  habitaciones.map((h) => (
-                    <li key={h.id}>
+            {/* BLOQUE: Formulario de reserva y catálogo */}
+            <div className="habitaciones-seccion">
+              {/* Lista rápida */}
+              <div className="habitaciones-lista">
+                <h3>Para reservar por una noche</h3>
+                <ul>
+                  {habitaciones.length === 0 ? (
+                    <li>
                       <img
+                        src="/img/habitacion-default.jpg"
+                        alt="Habitación predeterminada"
+                        style={{ width: "120px", height: "80px", objectFit: "cover", marginRight: "10px", borderRadius: "8px" }}
+                      />
+                      <span style={{ marginLeft: "10px" }}>
+                        <strong>Precio</strong> - Título de la habitación
+                      </span>
+                      <button
+                        style={{ marginLeft: "10px" }}
+                        onClick={() => setHabitacionSeleccionada({})}
+                      >Ver</button>
+                    </li>
+                  ) : (
+                    habitaciones.slice(0, 4).map((h) => (
+                      <li key={h.id}>
+                        <img
                             src={`http://localhost:8000/media/${h.imagen}`}
                             alt={h.nombre}
-                            style={{ width: "60px", height: "60px", 
-                              objectFit: "cover", borderRadius: "8px",
-                            marginRight: "10px" }}
+                            style={{ width: "60px", height: "60px", objectFit: "cover", borderRadius: "8px" }}
                         />
-                      {h.precio ? `$${h.precio}` : "Precio"} - {h.nombre || "Título de la habitación"}
-                      <button style={{marginLeft:"10px"}} onClick={() => setHabitacionSeleccionada(h)}>Ver</button>
-                    </li>
-                  ))
-                )}
-              </ul>
+                        <span>{h.precio ? `$${h.precio}` : "Precio"} - {h.nombre || "Título de la habitación"}</span>
+                        <button onClick={() => setHabitacionSeleccionada(h)}>Ver</button>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
 
-              <h4>Disponibilidad de habitaciones</h4>
-              <div className="barra-disponibilidad" style={{
-                width: "100%",
-                background: "#ddd",
-                borderRadius: "10px",
-                height: "20px",
-                marginTop: "10px",
-                overflow: "hidden"
-              }}>
-                <div style={{
-                  width: `${porcentajeDisponibles()}%`,
-                  height: "100%",
-                  background: "#4caf50",
-                  textAlign: "center",
-                  color: "#fff",
-                  fontWeight: "bold",
-                  lineHeight: "20px"
-                }}>
-                  {porcentajeDisponibles()}%
+              {/* Carrusel */}
+              <div className="habitaciones-carrusel">
+                <h3>Habitaciones destacadas</h3>
+                <div className="carrusel">
+                  {habitaciones.length === 0 ? (
+                    <div style={{ textAlign: "center" }}>
+                      <img
+                        src="/img/habitacion-default.jpg"
+                        alt="Habitación predeterminada"
+                        style={{ width: "200px", height: "120px", objectFit: "cover", display: "block", margin: "0 auto", borderRadius: "8px" }}
+                      />
+                      <div style={{ marginTop: "5px" }}>
+                        <strong>Precio</strong>
+                        <br />
+                        <span>Título de la habitación</span>
+                      </div>
+                    </div>
+                  ) : (
+                    habitaciones.map((h) => (
+                      <img
+                        key={h.id}
+                        src={`http://localhost:8000/media/${h.imagen}`}
+                        alt={h.nombre}
+                        className="carrusel-img"
+                        style={{ width: "60px", height: "60px", objectFit: "cover", borderRadius: "8px" }}
+                      />
+                    ))
+                  )}
                 </div>
               </div>
-            </div>
 
-            {/* DERECHA */}
-            <div className="ver-reservas-derecha">
-              <h3>Calendario de reservas</h3>
-              <div className="calendario">
-                <p>Calendario funcional pendiente de implementación</p>
+              {/* Catálogo */}
+              <div className="habitaciones-catalogo">
+                <h3>Catálogo de habitaciones</h3>
+                <ul>
+                  {habitaciones.length === 0 ? (
+                    <li style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <img
+                        src="/img/habitacion-icono.png"
+                        alt="Icono de habitación"
+                        style={{ width: "32px", height: "32px" }}
+                      />
+                      <span>
+                        <strong>Precio</strong> - Título de la habitación
+                      </span>
+                      <button
+                        style={{ marginLeft: "8px" }}
+                        onClick={() => setHabitacionSeleccionada({})}
+                      >Ver</button>
+                    </li>
+                  ) : (
+                    habitaciones.slice(0, 6).map((h) => (
+                      <li key={h.id}>
+                        🛏 {h.precio ? `$${h.precio}` : "Precio"} - {h.nombre || "Título de la habitación"}
+                        <button onClick={() => setHabitacionSeleccionada(h)}>Ver</button>
+                      </li>
+                    ))
+                  )}
+                </ul>
               </div>
 
-              <h4>Habitaciones más reservadas del mes</h4>
-              <ul className="mas-reservadas">
-                {habitaciones.length === 0 ? (
-                  <li>
-                    🛏 Título de la habitación - 0 reservas
-                  </li>
-                ) : (
-                  habitaciones.map((h) => {
-                    const total = reservas.filter(r => r.habitacion === h.nombre).length;
-                    return (
-                      <li key={h.id}>
-                        🛏 {h.nombre || "Título de la habitación"} - {total} reservas
-                      </li>
-                    );
-                  })
-                )}
-              </ul>
+              {/* Formulario */}
+              <div className="reserva-formulario">
+                <h3>Reservar para cliente</h3>
+                <select
+                  name="habitacion"
+                  value={formData.habitacion}
+                  onChange={handleChange}
+                >
+                  <option value="">--Seleccione--</option>
+                  {habitaciones.map((h) => (
+                    <option key={h.id} value={h.nombre}>
+                      {h.nombre} (${h.precio})
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  name="clienteNombre"
+                  placeholder="Nombre cliente"
+                  value={formData.clienteNombre}
+                  onChange={handleChange}
+                />
+                <input
+                  type="email"
+                  name="clienteEmail"
+                  placeholder="Correo cliente"
+                  value={formData.clienteEmail}
+                  onChange={handleChange}
+                />
+                <input
+                  type="date"
+                  name="fechaInicio"
+                  value={formData.fechaInicio}
+                  onChange={handleChange}
+                />
+                <input
+                  type="date"
+                  name="fechaFin"
+                  value={formData.fechaFin}
+                  onChange={handleChange}
+                />
+                <select
+                  name="metodoPago"
+                  value={formData.metodoPago}
+                  onChange={handleChange}
+                >
+                  <option value="tarjeta">Tarjeta</option>
+                  <option value="paypal">PayPal</option>
+                </select>
+                <input
+                  type="tel"
+                  name="clienteTelefono"
+                  placeholder="Teléfono cliente"
+                  value={formData.clienteTelefono}
+                  onChange={handleChange}
+                />
+                <button onClick={handleReservarCliente}>Reservar</button>
+               
+                <button onClick={onLogout}>Cerrar sesión</button>
+
+                {successMessage && <p className="success">{successMessage}</p>}
+                {error && <p className="error">{error}</p>}
+              </div>
             </div>
           </div>
+        )}
 
-          {/* ===== VISTA DETALLE HABITACIÓN ===== */}
         {habitacionSeleccionada && (
           <div className="detalle-habitacion">
             <button
@@ -387,12 +454,9 @@ const ReservasEmpleado = ({ onLogout }) => {
           </div>
         )}
      
-
-       
-
-       </div>
+      </div>
     </div>
   );
 };
 
-export default ReservasEmpleado;
+export default CatalogoEmpleado;

@@ -1,0 +1,113 @@
+/* PanelDuena.css */
+
+.panel-duena-container {
+  height: 100vh;
+  width: 100vw;
+  background-color: #B0DADA;
+  margin: 0;
+  overflow-x: hidden;
+  position: absolute;
+  top: 50px;
+  left: 0px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: url('../img/vestibulo.svg') center / cover no-repeat fixed, #9fceb4;
+  
+}
+
+.duena-wrapper {
+  position: absolute;
+  top: 70px;
+  padding: 2rem;
+  background-color: #f9fafc;
+  width: 95%;
+  min-height: 85%;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  
+}
+
+.panel-duena-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.panel-duena-header h1 {
+  font-size: 2rem;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.panel-duena-header p {
+  font-size: 1rem;
+  color: #6c7a89;
+  margin-top: 0.5rem;
+}
+
+/* Rejilla de secciones */
+.panel-duena-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Tarjetas */
+.panel-duena-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.08);
+  padding: 1.5rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.panel-duena-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0px 6px 14px rgba(0, 0, 0, 0.12);
+}
+
+.panel-duena-card h2 {
+  font-size: 1.25rem;
+  color: #34495e;
+  margin-bottom: 0.75rem;
+}
+
+.panel-duena-card p {
+  font-size: 0.95rem;
+  color: #7f8c8d;
+  margin-bottom: 1rem;
+}
+
+/* Botones */
+.panel-duena-button {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+  text-decoration: none;
+  text-align: center;
+}
+
+/* Color principal */
+.panel-duena-button.primary {
+  background-color: #8e44ad;
+  color: #fff;
+}
+
+.panel-duena-button.primary:hover {
+  background-color: #732d91;
+}
+
+/* Secundario */
+.panel-duena-button.secondary {
+  background-color: #ecf0f1;
+  color: #2c3e50;
+}
+
+.panel-duena-button.secondary:hover {
+  background-color: #d5dbdb;
+}
+

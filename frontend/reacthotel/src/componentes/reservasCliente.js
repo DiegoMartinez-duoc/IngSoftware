@@ -1,40 +1,3 @@
-<<<<<<< HEAD
-import React, { useState } from 'react';
-import '../estilos/Cliente.css'; 
-
-const ReservasCliente = ({ onViewChange }) => {
-  const [formData, setFormData] = useState({
-    email: '',
-    contrasena: '',
-    nombre: '',
-    telefono: ''
-  });
-  const [error, setError] = useState(null);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prevState => ({
-      ...prevState,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    console.log('Datos del formulario:', formData);
- 
-    if (!formData.email || !formData.contrasena) {
-      setError('Por favor, complete todos los campos');
-    } else {
-      setError(null);
-     
-    }
-  };
-
-  const handleGoToLogin = () => {
-    onViewChange("login");
-=======
 import React, { useState } from "react";
 import "../estilos/Cliente.css";
 
@@ -86,34 +49,11 @@ const ReservasCliente = () => {
     } catch (err) {
       setError("Error de conexión con el servidor.");
     }
->>>>>>> ee26b58 (Modificado reservaCliente.js, añadido reservaEmpleado.js, AdminPanel.js,Empleado.css, Admin.css)
   };
 
   return (
     <div className="cliente-container">
       <div className="gran-wrapper">
-<<<<<<< HEAD
-
-        <h2 className="texto">Reservas</h2>
-        
-      </div>
-
-      
-
-      <div id="tarjeta-1">
-        <h2 className="texto">Reservas</h2>
-      </div>
-
-      <div id="tarjeta-2">
-        <h2 className="texto">Reservas</h2>
-      </div>
-
-      <div id="tarjeta-3">
-        <h2 className="texto">Reservas</h2>
-      </div>
-        
-      
-=======
         <h2 className="texto">Reservas - Paso {step}</h2>
 
         {step === 1 && (
@@ -149,8 +89,8 @@ const ReservasCliente = () => {
 
         {step === 3 && (
           <>
-            <p>Ver detalles, precios y calcular total</p>
-            <p>
+            <p style={{color: "black"}}>Ver detalles, precios y calcular total</p>
+            <p style={{color: "black"}} >
               Habitación: {formData.habitacion || "No seleccionada"} <br />
               Fecha: {formData.fecha || "No seleccionada"} <br />
               Total: ${formData.habitacion === "suite" ? 100 : 50}
@@ -210,13 +150,21 @@ const ReservasCliente = () => {
           </>
         )}
       </div>
->>>>>>> ee26b58 (Modificado reservaCliente.js, añadido reservaEmpleado.js, AdminPanel.js,Empleado.css, Admin.css)
+
+      <div id="tarjeta-1">
+        <h2 className="texto">Reservas</h2>
+      </div>
+
+      <div id="tarjeta-2">
+        <h2 className="texto">Reservas</h2>
+      </div>
+
+      <div id="tarjeta-3">
+        <h2 className="texto">Reservas</h2>
+      </div>
+
     </div>
   );
 };
 
-<<<<<<< HEAD
 export default ReservasCliente;
-=======
-export default ReservasCliente;
->>>>>>> ee26b58 (Modificado reservaCliente.js, añadido reservaEmpleado.js, AdminPanel.js,Empleado.css, Admin.css)

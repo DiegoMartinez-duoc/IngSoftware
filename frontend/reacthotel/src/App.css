@@ -2,6 +2,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  overflow-y: hidden;
 }
 
 body {
@@ -18,13 +19,14 @@ body {
 }
 
 .barra-superior {
+   position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #49AFE2;
+  background-color: #050708;
   padding: 0.8rem 2rem;
-  height: 60px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  height: 100px;
+  box-shadow: 0 2px 10px rgb(0, 0, 0);
   position: relative;
   z-index: 100;
 }
@@ -61,7 +63,7 @@ body {
     width: 100%;
     padding: 10px 10px 10px 35px;
     font-size: 14px;
-    background: url('./img/buscarIcon.png') no-repeat left 10px center/20px;
+    /* background: url('/buscarIcon.png') no-repeat left 10px center/20px; */
     background-color: #757474;
     border: none;
     border-radius: 10px;
@@ -73,18 +75,36 @@ body {
   font-weight: 500;
 }
 
-.logo-container {
+.boton-logout {
+  color: white; 
+  background-color: #4caf50;
+  border: 2px solid #000000; 
+  border-radius: 6px;
+  padding: 8px 18px;
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  left:2050px;
 }
 
-#logo-central {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #fff;
+
+/* El contenedor ocupa toda la franja y centra su contenido */
+.logo-container{
+  position: absolute;      /* dentro de la barra */
+  inset: 0;                /* left:0; right:0; top:0; bottom:0 */
+  display: flex;
+  align-items: center;     /* centra vertical */
+  justify-content: center; /* centra horizontal */
+  z-index: 2;              /* sobre el fondo, bajo overlays si los hay */
+  pointer-events: none;    /* no bloquea clicks de los menús */
 }
 
+/* El logo se estira a lo ancho, mantiene 30px de alto */
+.logo-img{
+  height: 132px;            /* fijo */
+ width: 300px;           /* ocupa todo el ancho del contenedor */
+  object-fit: contain;       /* rellena el ancho, puede recortar un poco */
+  display: block;
+  pointer-events: auto;    /* quita si no necesitas clicks en el logo */
+}
 .logo {
   color: #ffffff;
 }

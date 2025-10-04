@@ -1,13 +1,6 @@
 from django.shortcuts import render
 from rest_framework.decorators import api_view
 from django.http import JsonResponse
-<<<<<<< HEAD
-
-from .models import Usuario, Rol
-from .forms import UsuarioForm
-
-# Create your views here.
-=======
 from django.utils import timezone
 from .models import Usuario, Rol, Habitacion, Reserva, Pagos
 import uuid
@@ -16,39 +9,12 @@ from django.db.models import Q, Sum
 # -----------------------
 # Registro de usuario
 # -----------------------
->>>>>>> ee26b58 (Modificado reservaCliente.js, añadido reservaEmpleado.js, AdminPanel.js,Empleado.css, Admin.css)
 @api_view(['POST'])
 def registro(request):
     try:
         data = request.data
 
         if Usuario.objects.filter(email=data['email']).exists():
-<<<<<<< HEAD
-            return JsonResponse({"valido": False})
-
-        nuevo_usuario = Usuario(
-            email = data['email'],
-            contrasena = data['contrasena'],
-            nombre = data['nombre'],
-            telefono = data['telefono'],
-            rol_id=Rol.objects.get(id='1')
-        )
-
-        print(data['email'])
-       
-        nuevo_usuario.save()
-
-        print(data['email'])
-
-        return JsonResponse({
-            "valido": True
-        })
-        
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
-    
-
-=======
             return JsonResponse({"valido": False, "mensaje": "El correo ya está registrado"})
 
         nuevo_usuario = Usuario(
@@ -65,35 +31,97 @@ def registro(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
 
+# -----------------------
+# Registro de empleado
+# -----------------------
+
+@api_view(['POST'])
+def registro_empleado(request):
+    try:
+        data = request.data
+
+        if Usuario.objects.filter(email=data['email']).exists():
+            return JsonResponse({"valido": False, "mensaje": "El correo ya está registrado"})
+
+        nuevo_usuario = Usuario(
+            email=data['email'],
+            contrasena=data['contrasena'],
+            nombre=data['nombre'],
+            telefono=data['telefono'],
+            rol_id=Rol.objects.get(id=2)
+        )
+        nuevo_usuario.save()
+
+        return JsonResponse({"valido": True, "mensaje": "Usuario registrado con éxito"})
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+# -----------------------
+# Eliminar usuario
+# -----------------------
+
+@api_view(['POST'])
+def eliminar_usuario(request):
+    try:
+        data = request.data
+        credencial = Usuario.objects.get(id=data['id'])
+
+        credencial.delete()
+
+       
+
+        return JsonResponse({"valido": True, "mensaje": "Usuario eliminado con éxito"})
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
 
 # -----------------------
 # Login
 # -----------------------
->>>>>>> ee26b58 (Modificado reservaCliente.js, añadido reservaEmpleado.js, AdminPanel.js,Empleado.css, Admin.css)
 @api_view(['POST'])
 def login(request):
     try:
         data = request.data
-<<<<<<< HEAD
-
         credencial = Usuario.objects.get(email=data['email'])
-
+     
         if credencial.contrasena == data['contrasena']:
-            return JsonResponse({
-            "valido": True
-            })
-        else:
-            return JsonResponse({
-            "valido": False
-        })
-
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
-=======
-        credencial = Usuario.objects.get(email=data['email'])
-
-        if credencial.contrasena == data['contrasena']:
-            return JsonResponse({"valido": True})
+            if (credencial.rol_id == Rol.objects.get(id=1)):
+                return JsonResponse(
+                    {
+                        "valido": True, 
+                        "tipo": "usuario",
+                        "rol": credencial.rol_id.nombre_rol,
+                        "nombre": credencial.nombre,
+                        "email": credencial.email
+                    })
+            elif (credencial.rol_id == Rol.objects.get(id=2)):
+                return JsonResponse(
+                    {
+                        "valido": True, 
+                        "tipo": "empleado",
+                        "rol": credencial.rol_id.nombre_rol,
+                        "nombre": credencial.nombre,
+                        "email": credencial.email
+                    })
+            elif (credencial.rol_id == Rol.objects.get(id=3)):
+                return JsonResponse(
+                    {
+                        "valido": True, 
+                        "tipo": "admin",
+                        "rol": credencial.rol_id.nombre_rol,
+                        "nombre": credencial.nombre,
+                        "email": credencial.email
+                    })
+            else:
+                return JsonResponse(
+                    {
+                        "valido": True, 
+                        "tipo": "duena",
+                        "rol": credencial.rol_id.nombre_rol,
+                        "nombre": credencial.nombre,
+                        "email": credencial.email
+                    })
         else:
             return JsonResponse({"valido": False})
 
@@ -194,6 +222,7 @@ def listar_reservas(request):
                 "estado": r.estado,
                 "monto": r.monto_total,
                 "codigo_qr": r.codigo_qr,
+                "imagen": r.id_habitacion.imagen
             }
             for r in reservas
         ]
@@ -219,6 +248,7 @@ def listar_habitaciones(request):
                 "descripcion": h.descripcion,
                 "precio": h.precio_por_noche,
                 "capacidad": h.capacidad,
+                "imagen": h.imagen.name if h.imagen else None
             }
             for h in habitaciones
         ]
@@ -236,7 +266,7 @@ def listar_habitaciones(request):
 def listar_usuarios(request):
     try:
         usuarios = Usuario.objects.all()
-        data = [
+        dataCliente = [
             {
                 "id": u.id,
                 "nombre": u.nombre,
@@ -244,9 +274,35 @@ def listar_usuarios(request):
                 "telefono": u.telefono,
                 "rol": u.rol_id.nombre_rol
             }
-            for u in usuarios
+            for u in usuarios if u.rol_id == Rol.objects.get(id=1)
         ]
-        return JsonResponse({"success": True, "usuarios": data})
+
+        dataEmpleado = [
+            {
+                "id": u.id,
+                "nombre": u.nombre,
+                "email": u.email,
+                "telefono": u.telefono,
+                "rol": u.rol_id.nombre_rol
+            }
+            for u in usuarios if u.rol_id == Rol.objects.get(id=2)
+        ]
+
+        # dataClientesReserva = [
+        #     {
+        #         "id": u.id,
+        #         "nombre": u.nombre,
+        #         "email": u.email,
+        #         "telefono": u.telefono,
+        #         "rol": u.rol_id.nombre_rol
+        #     }
+        #     for u in usuarios if u.rol_id == Rol.objects.get(id=1) and Reserva.objects.get(id_usuario=u) != None
+        # ]
+
+        # print(dataClientesReserva)
+
+
+        return JsonResponse({"success": True, "clientes": dataCliente, "empleados": dataEmpleado})
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=400)
 
@@ -267,7 +323,8 @@ def listar_reservas_confirmadas(request):
                 "entrada": str(r.entrada),
                 "salida": str(r.salida),
                 "monto_total": r.monto_total,
-                "codigo_qr": r.codigo_qr
+                "codigo_qr": r.codigo_qr,
+                "imagen": r.id_habitacion.imagen.name if r.id_habitacion.imagen else None
             }
             for r in reservas
         ]
@@ -303,4 +360,3 @@ def generar_reporte(request):
         return JsonResponse({"success": True, "reporte": reporte})
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=400)
->>>>>>> ee26b58 (Modificado reservaCliente.js, añadido reservaEmpleado.js, AdminPanel.js,Empleado.css, Admin.css)

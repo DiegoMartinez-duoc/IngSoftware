@@ -63,15 +63,24 @@ const Registro = ({ onViewChange }) => {
 
   return (
     <div className="login-container">
-      <div className="wrapper">
+      <div className="wrapper2">
 
-        <h2 className="text-center">Por favor, registrate para acceder a nuestros servicios</h2>
-        <form onSubmit={handleSubmit} id="registro-formulario" className="validacion" noValidate>
+        <h2 className="heading">Por favor, registrate para acceder a nuestros servicios</h2>
+
+        <div className="actions">
+          <span className="divider" onClick={handleGoToLogin}>¿Ya tienes cuenta? Ingresa aquí</span>
+        </div>
+          
+          
+         
+        
+
+        <form onSubmit={handleSubmit} id="registro-formulario" className="form" noValidate>
           <div className="primera-linea">
             <input 
               name="email" 
               type="email" 
-              className="formulario" 
+              className="form-input" 
               id="email-input" 
               placeholder={error ? "Correo invalido" : "Ingresa tu email"} 
               value={formData.email}
@@ -83,7 +92,7 @@ const Registro = ({ onViewChange }) => {
             <input 
               name="contrasena" 
               type="password" 
-              className="formulario" 
+              className="form-input" 
               id="contrasena-input" 
               placeholder="Ingresa tu contraseña" 
               value={formData.contrasena}
@@ -95,7 +104,7 @@ const Registro = ({ onViewChange }) => {
             <input 
               name="nombre" 
               type="text" 
-              className="formulario" 
+              className="form-input" 
               id="nombre-input" 
               placeholder="Ingresa tu nombre" 
               value={formData.nombre}
@@ -107,7 +116,7 @@ const Registro = ({ onViewChange }) => {
             <input 
               name="telefono" 
               type="tel" 
-              className="formulario" 
+              className="form-input" 
               id="telefono-input" 
               placeholder="Ingresa tu telefono" 
               value={formData.telefono}
@@ -116,13 +125,9 @@ const Registro = ({ onViewChange }) => {
             />
           </div>
           <div className="boton">
-            <button type="submit" className="registrar">REGISTRAR</button>
+            <button type="submit" className="btn" id="btn-registro">REGISTRAR</button>
           </div>
         </form>
-
-        <h7 className="ir-login">
-          ¿Ya tienes una cuenta? Ingresa <span id="login" onClick={handleGoToLogin}>aquí</span>
-        </h7>
       </div>
     </div>
   );

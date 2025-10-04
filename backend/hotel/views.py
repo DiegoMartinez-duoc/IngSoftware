@@ -1,13 +1,6 @@
 from django.shortcuts import render
 from rest_framework.decorators import api_view
 from django.http import JsonResponse
-<<<<<<< HEAD
-
-from .models import Usuario, Rol
-from .forms import UsuarioForm
-
-# Create your views here.
-=======
 from django.utils import timezone
 from .models import Usuario, Rol, Habitacion, Reserva, Pagos
 import uuid
@@ -16,39 +9,12 @@ from django.db.models import Q, Sum
 # -----------------------
 # Registro de usuario
 # -----------------------
->>>>>>> ee26b58 (Modificado reservaCliente.js, añadido reservaEmpleado.js, AdminPanel.js,Empleado.css, Admin.css)
 @api_view(['POST'])
 def registro(request):
     try:
         data = request.data
 
         if Usuario.objects.filter(email=data['email']).exists():
-<<<<<<< HEAD
-            return JsonResponse({"valido": False})
-
-        nuevo_usuario = Usuario(
-            email = data['email'],
-            contrasena = data['contrasena'],
-            nombre = data['nombre'],
-            telefono = data['telefono'],
-            rol_id=Rol.objects.get(id='1')
-        )
-
-        print(data['email'])
-       
-        nuevo_usuario.save()
-
-        print(data['email'])
-
-        return JsonResponse({
-            "valido": True
-        })
-        
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
-    
-
-=======
             return JsonResponse({"valido": False, "mensaje": "El correo ya está registrado"})
 
         nuevo_usuario = Usuario(
@@ -67,40 +33,29 @@ def registro(request):
 
 
 # -----------------------
-# Login
+# Login con rol
 # -----------------------
->>>>>>> ee26b58 (Modificado reservaCliente.js, añadido reservaEmpleado.js, AdminPanel.js,Empleado.css, Admin.css)
 @api_view(['POST'])
 def login(request):
     try:
         data = request.data
-<<<<<<< HEAD
-
         credencial = Usuario.objects.get(email=data['email'])
 
         if credencial.contrasena == data['contrasena']:
             return JsonResponse({
-            "valido": True
+                "valido": True,
+                "rol": credencial.rol_id.nombre_rol,
+                "nombre": credencial.nombre,
+                "email": credencial.email
             })
         else:
-            return JsonResponse({
-            "valido": False
-        })
-
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
-=======
-        credencial = Usuario.objects.get(email=data['email'])
-
-        if credencial.contrasena == data['contrasena']:
-            return JsonResponse({"valido": True})
-        else:
-            return JsonResponse({"valido": False})
+            return JsonResponse({"valido": False, "mensaje": "Contraseña incorrecta"})
 
     except Usuario.DoesNotExist:
         return JsonResponse({"valido": False, "mensaje": "Usuario no encontrado"})
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
+
 
 
 # -----------------------
@@ -303,4 +258,3 @@ def generar_reporte(request):
         return JsonResponse({"success": True, "reporte": reporte})
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=400)
->>>>>>> ee26b58 (Modificado reservaCliente.js, añadido reservaEmpleado.js, AdminPanel.js,Empleado.css, Admin.css)

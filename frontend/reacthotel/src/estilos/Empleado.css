@@ -1,34 +1,98 @@
 .empleado-container {
   height: 100vh;
   width: 100vw;
-  background-color: #B0DADA; /* Color ligeramente distinto para diferenciar */
+  background-color: #B0DADA;
   margin: 0;
   overflow-x: hidden;
   position: absolute;
   top: 20px;
   left: 0px;
-  
   display: flex;
-  align-items: center; 
-  justify-content: center; 
+  align-items: flex-start;
+  justify-content: center;
 }
 
 .gran-wrapper {
   display: flex;
   flex-direction: column;
-  position: absolute;
-  top: 70px;
+  position: relative;
   background-color: #E8E8E8;
-  width: 1200px; /* más estrecho para contener inputs y listas */
-  min-height: 500px;
+  width: 95%;
+  min-height: 95%;
   padding: 20px;
-  border-radius: 10px; 
+  border-radius: 10px;
 }
 
 .texto {
   color: black;
   font-size: 24px;
   margin-bottom: 15px;
+}
+
+/* Sección habitaciones recomendadas */
+.habitaciones-recomendadas {
+  margin-bottom: 30px;
+  color: rgb(29, 27, 27);
+}
+.habitaciones-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.habitacion-card {
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  text-align: center;
+  padding: 10px;
+}
+.habitacion-imagen img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+.habitacion-info {
+  margin-top: 10px;
+}
+
+/* Sección inferior */
+.habitaciones-seccion {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  gap: 20px;
+  margin-bottom: 30px;
+  color: gray;
+}
+
+.habitaciones-lista, .habitaciones-catalogo {
+  background: #f8f8f8;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.habitaciones-carrusel {
+  background: #f8f8f8;
+  border-radius: 10px;
+  padding: 10px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.carrusel-img {
+  display: inline-block;
+  margin-right: 10px;
+  width: 280px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+/* Formulario reserva */
+.reserva-formulario {
+  background: #f8f8f8;
+  border-radius: 10px;
+  padding: 20px;
 }
 
 input, select, button {
@@ -43,6 +107,7 @@ button {
   background-color: #4CAF50;
   color: white;
   cursor: pointer;
+  margin-right: 10px;
 }
 
 button:hover {
@@ -53,16 +118,124 @@ button:hover {
   color: red;
   margin-top: 10px;
 }
+.success {
+  color: green;
+  margin-top: 10px;
+}
 
 ul {
   list-style: none;
   padding: 0;
   margin-top: 10px;
 }
-
 li {
   background-color: #f0f0f0;
   margin-bottom: 5px;
   padding: 8px;
   border-radius: 5px;
 }
+
+.detalle-habitacion {
+  margin-top: 20px;
+}
+
+.detalle-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+}
+
+.detalle-izquierda, .detalle-centro, .detalle-derecha {
+  background: #f8f8f8;
+  padding: 15px;
+  border-radius: 10px;
+  color: rgb(44, 44, 44);
+}
+
+.detalle-centro input {
+  display: block;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.detalle-derecha input {
+  display: block;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.detalle-derecha button {
+  margin-top: 10px;
+}
+
+/* Step 2: Ver reservas */
+.ver-reservas-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.ver-reservas-izquierda, .ver-reservas-derecha {
+  background: #ffffff;
+  padding: 15px;
+  border-radius: 10px;
+  color:#079157
+}
+
+.historial-reservas {
+  list-style: none;
+  padding: 0;
+  margin-top: 10px;
+}
+
+.reserva-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 10px;
+}
+
+.miniatura-habitacion {
+  width: 60px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
+.grafico-torta {
+  margin-top: 10px;
+  background: white;
+  text-align: center;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.mas-reservadas {
+  list-style: none;
+  padding: 0;
+  margin-top: 10px;
+}
+
+/* Tres columnas en recomendaciones */
+.habitaciones-grid.columnas-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+/* Estado visual de disponibilidad */
+.habitaciones-disponibilidad .disponibilidad-bar {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.barra-habitacion {
+  flex: 1;
+  padding: 8px;
+  text-align: center;
+  border-radius: 6px;
+  color: #fff;
+}
+.barra-habitacion.disponible { background-color: #4CAF50; }
+.barra-habitacion.ocupada { background-color: #F44336; }

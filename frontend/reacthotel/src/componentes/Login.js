@@ -7,6 +7,7 @@ const Login = ({ onViewChange }) => {
   const [serverMsg, setServerMsg] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Maneja cambios en los inputs
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((s) => ({ ...s, [name]: value }));
@@ -14,10 +15,11 @@ const Login = ({ onViewChange }) => {
     if (serverMsg) setServerMsg(null);
   };
 
+  // Envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validación antes de llamar al backend
+    // Validación previa
     if (!formData.email || !formData.contrasena) {
       setError('Por favor, complete todos los campos');
       return;
@@ -40,7 +42,23 @@ const Login = ({ onViewChange }) => {
       const response = await res.json();
 
       if (response?.valido === true) {
-        handleGoToInicioCliente();
+        // 👇 Redirige según el rol que venga en la respuesta del backend
+        switch (response.rol) {
+          case 'usuario':
+            handleGoToInicioCliente();
+            break;
+          case 'empleado':
+            handleGoToInicioEmpleado();
+            break;
+          case 'duena':
+            handleGoToInicioDuena();
+            break;
+          case 'admin':
+            handleGoToInicioAdmin();
+            break;
+          default:
+            setServerMsg('Rol no reconocido. Contacte al administrador.');
+        }
       } else {
         // Mensaje amigable si el backend no valida
         setServerMsg(response?.mensaje || 'Credenciales inválidas o usuario no encontrado.');
@@ -53,9 +71,13 @@ const Login = ({ onViewChange }) => {
     }
   };
 
+  // 👇 Funciones de navegación (no se pierden)
   const handleGoToRegistro = () => onViewChange?.('registro');
-  const handleGoToRecuperar = () => onViewChange?.('recuperar'); // 👈 nuevo acceso
+  const handleGoToRecuperar = () => onViewChange?.('recuperar');
   const handleGoToInicioCliente = () => onViewChange?.('inicioCliente');
+  const handleGoToInicioEmpleado = () => onViewChange?.('inicioEmpleado');
+  const handleGoToInicioDuena = () => onViewChange?.('inicioDuena');
+  const handleGoToInicioAdmin = () => onViewChange?.('inicioAdmin');
 
   return (
     <div className="login-container">
@@ -68,7 +90,6 @@ const Login = ({ onViewChange }) => {
             ¿No tienes cuenta? Regístrate aquí
           </span>
           <span className="divider">·</span>
-         
         </div>
 
         <form onSubmit={handleSubmit} id="registro-formulario" className="form" noValidate>
@@ -95,10 +116,12 @@ const Login = ({ onViewChange }) => {
             autoComplete="current-password"
             aria-label="Contraseña"
           />
-             <span className="link2" id="recuperar" onClick={handleGoToRecuperar}>
+
+          <span className="link2" id="recuperar" onClick={handleGoToRecuperar}>
             ¿Olvidaste tu contraseña? Recupera aquí
           </span>
-          {/* Mensajes de error/estado */}
+
+          {/* Mensajes de error o estado */}
           {(error || serverMsg) && (
             <p className="feedback" role="alert">
               {error || serverMsg}

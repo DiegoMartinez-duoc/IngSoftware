@@ -1,8 +1,6 @@
 * {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
-  overflow-y: hidden;
+  overflow-x: hidden;
 }
 
 body {
@@ -13,13 +11,16 @@ body {
 }
 
 .app-container {
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  position: relative;
 }
 
 .barra-superior {
-   position: relative;
+  width: 100%;
+  position: absolute;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -80,9 +81,9 @@ body {
   background-color: #4caf50;
   border: 2px solid #000000; 
   border-radius: 6px;
-  padding: 8px 18px;
+  padding: 8px 0px;
   position: absolute;
-  left:2050px;
+  left:1391px;
 }
 
 

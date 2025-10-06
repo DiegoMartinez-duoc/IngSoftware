@@ -5,6 +5,8 @@ from django.utils import timezone
 from .models import Usuario, Rol, Habitacion, Reserva, Pagos
 import uuid
 from django.db.models import Q, Sum
+from datetime import datetime, timedelta
+
 
 # -----------------------
 # Registro de usuario
@@ -134,29 +136,46 @@ def login(request):
 # -----------------------
 # Reserva para cliente
 # -----------------------
+# views.py
 @api_view(['POST'])
 def reservar(request):
     try:
         data = request.data
 
-        habitacion = Habitacion.objects.get(nombre=data['habitacion'])
+        # 1) Resolver habitación por id o por nombre (compatibilidad)
+        habitacion = None
+        if data.get('habitacion_id'):
+            habitacion = Habitacion.objects.get(id=data['habitacion_id'])
+        elif data.get('habitacion'):
+            habitacion = Habitacion.objects.get(nombre=data['habitacion'])
+        else:
+            return JsonResponse({"success": False, "error": "Falta seleccionar la habitación"}, status=400)
 
-        entrada = timezone.now()
-        salida = timezone.now()  # por ahora igual
+        # 2) Fechas (si no envían 'fecha', usar hoy; asumimos 1 noche)
+        if data.get('fecha'):
+            # soporta 'YYYY-MM-DD' o ISO
+            fecha_str = str(data['fecha']).split('T')[0]
+            entrada = datetime.fromisoformat(fecha_str)
+        else:
+            entrada = timezone.now()
+        salida = entrada + timedelta(days=1)
 
-        usuario, created = Usuario.objects.get_or_create(
+        # 3) Usuario (crea si no existe)
+        usuario, _ = Usuario.objects.get_or_create(
             email=data['email'],
             defaults={
-                "nombre": data['nombre'],
+                "nombre": data.get("nombre", "Cliente"),
                 "contrasena": "temporal123",
                 "telefono": data.get("telefono", ""),
                 "rol_id": Rol.objects.get(id=1)
             }
         )
 
+        # 4) Monto simple por noche
         monto = int(habitacion.precio_por_noche)
-        codigo_qr = f"QR-{uuid.uuid4()}"
 
+        # 5) Crear reserva + pago
+        codigo_qr = f"QR-{uuid.uuid4()}"
         nueva_reserva = Reserva.objects.create(
             id_usuario=usuario,
             id_habitacion=habitacion,
@@ -170,7 +189,7 @@ def reservar(request):
         pago = Pagos.objects.create(
             id_reserva=nueva_reserva,
             monto=monto,
-            metodo_de_pago=data['metodoPago'],
+            metodo_de_pago=data.get('metodoPago', 'tarjeta'),
             id_transaccion=str(uuid.uuid4()),
             estado="aprobado"
         )
@@ -181,7 +200,8 @@ def reservar(request):
             "codigoQR": nueva_reserva.codigo_qr,
             "total": nueva_reserva.monto_total,
             "habitacion": habitacion.nombre,
-            "fecha": str(nueva_reserva.entrada.date()),
+            "fecha_entrada": str(nueva_reserva.entrada.date()),
+            "fecha_salida": str(nueva_reserva.salida.date()),
             "pago": {
                 "metodo": pago.metodo_de_pago,
                 "estado": pago.estado,
@@ -193,7 +213,6 @@ def reservar(request):
         return JsonResponse({"success": False, "error": "Habitación no encontrada"}, status=404)
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=400)
-
 
 # -----------------------
 # Listar reservas (empleado/admin)
@@ -358,5 +377,88 @@ def generar_reporte(request):
             reporte = {"tipo": tipo, "detalle": [r.id for r in reservas]}
 
         return JsonResponse({"success": True, "reporte": reporte})
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
+
+@api_view(['GET'])
+def mis_reservas(request):
+    """
+    GET /hotel/mis_reservas?email=usuario@correo.com&estado=confirmada|pendiente|cancelada  (estado opcional)
+    También acepta ?usuario_id=123
+    """
+    try:
+        email = request.GET.get("email")
+        usuario_id = request.GET.get("usuario_id")
+        estado = request.GET.get("estado")  # opcional
+
+        if not email and not usuario_id:
+            return JsonResponse({"success": False, "error": "Falta email o usuario_id"}, status=400)
+
+        if usuario_id:
+            reservas = Reserva.objects.filter(id_usuario__id=usuario_id)
+        else:
+            reservas = Reserva.objects.filter(id_usuario__email=email)
+
+        if estado:
+            reservas = reservas.filter(estado=estado)
+
+        reservas = reservas.order_by("-entrada")
+
+        data = [{
+            "id": r.id,
+            "habitacion": r.id_habitacion.nombre,
+            "entrada": r.entrada.isoformat(),
+            "salida": r.salida.isoformat(),
+            "estado": r.estado,
+            "monto_total": r.monto_total,
+            "codigo_qr": r.codigo_qr,
+            "imagen": r.id_habitacion.imagen.name if r.id_habitacion.imagen else None,
+        } for r in reservas]
+
+        return JsonResponse({"success": True, "reservas": data})
+
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
+
+
+@api_view(['POST'])
+def pagar_reserva(request):
+    """
+    Body: { "reserva_id": 123, "metodoPago": "tarjeta" }
+    """
+    try:
+        data = request.data
+        reserva_id = data.get("reserva_id")
+        metodo = data.get("metodoPago", "tarjeta")
+        if not reserva_id:
+            return JsonResponse({"success": False, "error": "Falta reserva_id"}, status=400)
+
+        reserva = Reserva.objects.get(id=reserva_id)
+        if reserva.estado == "confirmada":
+            return JsonResponse({"success": False, "error": "La reserva ya está confirmada"}, status=400)
+
+        pago = Pagos.objects.create(
+            id_reserva=reserva,
+            monto=reserva.monto_total,
+            metodo_de_pago=metodo,
+            id_transaccion=str(uuid.uuid4()),
+            estado="aprobado"
+        )
+        reserva.estado = "confirmada"
+        reserva.save(update_fields=["estado"])
+
+        return JsonResponse({
+            "success": True,
+            "mensaje": "Pago realizado y reserva confirmada",
+            "reserva_id": reserva.id,
+            "pago": {
+                "metodo": pago.metodo_de_pago,
+                "estado": pago.estado,
+                "id_transaccion": pago.id_transaccion
+            }
+        })
+
+    except Reserva.DoesNotExist:
+        return JsonResponse({"success": False, "error": "Reserva no encontrada"}, status=404)
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=400)

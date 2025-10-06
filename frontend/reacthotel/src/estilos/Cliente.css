@@ -1,70 +1,164 @@
+/* Contenedor general */
 .cliente-container {
-  height: 100vh;
-  width: 100vw;
-  background-color: #9FCECE;
-  margin: 0;
-  overflow-x: hidden;
-  position: absolute;
-
-  top: 20px;
-  left: 0px;
-  
-  display: flex;
-  align-items: center; 
-  justify-content: center; 
+  min-height: 100vh;
+  width: 100%;
+  padding: 24px;
+  background: #f3f7fb;
 }
 
-.gran-wrapper {
+/* Header con saludo y botón */
+.cliente-header {
   display: flex;
-  position: absolute;
-  top: 70px;
-  background-color: #E0E0E0;
-  width: 2150px;
-  height: 480px;
-  padding: 20px;
-  border-radius: 10px; 
-}
-
-#tarjeta-1 {
-  display: flex;
-  position: absolute;
-  top: 580px;
-  left: 30px;
-  
-  background-color: #E0E0E0;
-  width: 700px;
-  height: 380px;
-  padding: 20px;
-  border-radius: 10px; 
-}
-
-#tarjeta-2 {
-  display: flex;
-  position: absolute;
-  top: 580px;
-  left: 795px;
-  
-  background-color: #E0E0E0;
-  width: 620px;
-  height: 380px;
-  padding: 20px;
-  border-radius: 10px; 
-}
-
-#tarjeta-3 {
-  display: flex;
-  position: absolute;
-  top: 580px;
-  left: 1480px;
-  
-  background-color: #E0E0E0;
-  width: 700px;
-  height: 380px;
-  padding: 20px;
-  border-radius: 10px; 
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .texto {
-  color: black;
+  margin: 0;
+  font-weight: 800;
+  font-size: clamp(20px, 3.2vw, 28px);
+}
+.subtexto {
+  margin: 2px 0 0 0;
+  color: #334155;
+  font-size: 0.95rem;
 }
 
+.header-actions { display: flex; gap: 10px; }
+
+.btn-secundario {
+  border: 1px solid #cbd5e1;
+  background: #0ee347;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease;
+}
+.btn-secundario:hover { box-shadow: 0 6px 14px rgba(0,0,0,.06); transform: translateY(-1px); border-color: #94a3b8; }
+.btn-secundario:focus { outline: none; box-shadow: 0 0 0 3px rgba(14,165,233,.25); }
+
+/* Grid de tarjetas */
+.grid-habitaciones {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+/* Forzar 4 columnas en desktop amplio */
+@media (min-width: 1200px) {
+  .grid-habitaciones {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Tarjeta */
+.card-habitacion {
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+  display: flex;
+  flex-direction: column;
+  transition: transform .12s ease, box-shadow .16s ease;
+}
+.card-habitacion:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.10); }
+
+.card-media { aspect-ratio: 16 / 9; overflow: hidden; background: #f1f5f9; }
+.card-img { width: 100%; height: 100%; display: block; object-fit: cover; }
+
+.card-body { padding: 12px 14px 16px; display: grid; gap: 8px; }
+.card-title { margin: 0; font-size: 1.1rem; font-weight: 800; color: #0f172a; }
+.card-desc { font-size: .95rem; color: #334155; min-height: 3.2em; }
+
+.card-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: .92rem;
+  color: #0f172a;
+}
+
+/* Botones acción */
+.btn-primario {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: #0ea5e9;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .08s ease, box-shadow .12s ease, background .12s ease;
+}
+.btn-primario:hover { box-shadow: 0 8px 18px rgba(14,165,233,.35); transform: translateY(-1px); background: #0392d5; }
+.btn-primario:focus { outline: none; box-shadow: 0 0 0 3px rgba(14,165,233,.25); }
+.btn-primario:disabled { background: #94a3b8; cursor: not-allowed; box-shadow: none; transform: none; }
+
+/* Estados */
+.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 8px 0;
+}
+
+/* ===== Skeleton de carga (placeholders) ===== */
+.skeleton .card-media { background: #e5e7eb; }
+.sk-line { height: 12px; background: #e5e7eb; border-radius: 8px; margin: 8px 0; }
+.sk-title { height: 16px; }
+.sk-line.short { width: 60%; }
+.sk-btn { height: 36px; background: #e5e7eb; border-radius: 10px; margin-top: 6px; }
+
+/* ====== SOPORTE VISTA RESERVAS (paso a paso) ====== */
+.gran-wrapper{
+  width: min(900px, 100%);
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 8px 20px rgba(15,23,42,.06);
+  margin-top: 10px;
+}
+
+.gran-wrapper .texto{ color:#0f172a; margin-bottom:8px; }
+
+.gran-wrapper input[type="date"],
+.gran-wrapper input[type="text"],
+.gran-wrapper input[type="email"],
+.gran-wrapper select{
+  width: min(420px, 100%);
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  outline: none;
+  margin: 6px 10px 6px 0;
+}
+
+.gran-wrapper .error{
+  background:#fee2e2;
+  color:#991b1b;
+  border:1px solid #fecaca;
+  border-radius:10px;
+  padding:10px 12px;
+  display:inline-block;
+  margin:8px 0;
+}
+
+
+/* Animación sutil al skeleton */
+@keyframes pulse {
+  0% { opacity: .85; }
+  50% { opacity: .55; }
+  100% { opacity: .85; }
+}
+.skeleton .card-media,
+.skeleton .sk-line,
+.skeleton .sk-btn { animation: pulse 1.5s ease-in-out infinite; }

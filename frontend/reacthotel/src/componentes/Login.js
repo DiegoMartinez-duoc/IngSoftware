@@ -14,10 +14,43 @@ const Login = ({ onViewChange }) => {
     if (serverMsg) setServerMsg(null);
   };
 
+  const saveUser = (data) => {
+    // data viene de /hotel/login/
+    const usuario = {
+      email: data.email,
+      nombre: data.nombre,
+      rol: data.rol,     // p.ej. "Cliente", "Empleado", etc.
+      tipo: data.tipo,   // "usuario" | "empleado" | "admin" | "duena"
+    };
+    localStorage.setItem('usuarioActual', JSON.stringify(usuario));
+  };
+
+  const clearUser = () => {
+    localStorage.removeItem('usuarioActual');
+  };
+
+  const routeByTipo = (tipo) => {
+    switch (tipo) {
+      case 'usuario':
+        onViewChange?.('inicioCliente');
+        break;
+      case 'empleado':
+        onViewChange?.('inicioEmpleado');
+        break;
+      case 'duena':
+        onViewChange?.('inicioDuena');
+        break;
+      case 'admin':
+        onViewChange?.('adminPanel');
+        break;
+      default:
+        setServerMsg('Rol/tipo no reconocido. Contacte al administrador.');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validación antes de llamar al backend
     if (!formData.email || !formData.contrasena) {
       setError('Por favor, complete todos los campos');
       return;
@@ -31,7 +64,6 @@ const Login = ({ onViewChange }) => {
         body: JSON.stringify(formData),
       });
 
-      // Manejo básico de errores HTTP
       if (!res.ok) {
         const text = await res.text().catch(() => '');
         throw new Error(text || `Error HTTP ${res.status}`);
@@ -40,28 +72,17 @@ const Login = ({ onViewChange }) => {
       const response = await res.json();
 
       if (response?.valido === true) {
-        switch (response.rol) {
-          case 'usuario':
-            handleGoToInicioCliente();
-            break;
-          case 'empleado':
-            handleGoToInicioEmpleado();
-            break;
-          case 'duena':
-            handleGoToInicioDuena();
-            break;
-          case 'admin':
-            handleGoToAdmin();
-            break;
-          default:
-            setServerMsg('Rol no reconocido. Contacte al administrador.');
-        }
+        // 1) Guardar sesión
+        saveUser(response);
+        // 2) Rutear por "tipo" (no por "rol")
+        routeByTipo(response.tipo);
       } else {
-        // Mensaje amigable si el backend no valida
+        clearUser();
         setServerMsg(response?.mensaje || 'Credenciales inválidas o usuario no encontrado.');
       }
     } catch (err) {
       console.error('Error:', err);
+      clearUser();
       setServerMsg('No se pudo iniciar sesión. Intente nuevamente en unos segundos.');
     } finally {
       setLoading(false);
@@ -69,24 +90,21 @@ const Login = ({ onViewChange }) => {
   };
 
   const handleGoToRegistro = () => onViewChange?.('registro');
-  const handleGoToRecuperar = () => onViewChange?.('recuperar'); 
-  const handleGoToInicioCliente = () => onViewChange?.('inicioCliente');
-  const handleGoToInicioEmpleado = () => onViewChange?.('inicioEmpleado');
-  const handleGoToInicioDuena = () => onViewChange?.('inicioDuena');
-  const handleGoToAdmin = () => onViewChange?.("adminPanel");
+  const handleGoToRecuperar = () => onViewChange?.('recuperar');
 
   return (
     <div className="login-container">
       <div className="wrapper">
-        <h2 className="heading" style={{color:"white"}}>Por favor, ingresa para acceder a nuestros servicios.</h2>
+        <h2 className="heading" style={{ color: 'white' }}>
+          Por favor, ingresa para acceder a nuestros servicios.
+        </h2>
 
-        {/* Enlaces superiores (registro + recuperar) */}
         <div className="actions">
           <span className="link1" id="registro" onClick={handleGoToRegistro}>
             ¿No tienes cuenta? Regístrate aquí
           </span>
           <span className="divider">·</span>
-         
+          {/* Puedes agregar más acciones si quieres */}
         </div>
 
         <form onSubmit={handleSubmit} id="registro-formulario" className="form" noValidate>
@@ -113,10 +131,11 @@ const Login = ({ onViewChange }) => {
             autoComplete="current-password"
             aria-label="Contraseña"
           />
-             <span className="link2" id="recuperar" onClick={handleGoToRecuperar}>
+
+          <span className="link2" id="recuperar" onClick={handleGoToRecuperar}>
             ¿Olvidaste tu contraseña? Recupera aquí
           </span>
-          {/* Mensajes de error/estado */}
+
           {(error || serverMsg) && (
             <p className="feedback" role="alert">
               {error || serverMsg}

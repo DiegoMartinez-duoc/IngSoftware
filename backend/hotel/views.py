@@ -5,7 +5,15 @@ from django.utils import timezone
 from .models import Usuario, Rol, Habitacion, Reserva, Pagos
 import uuid
 from django.db.models import Q, Sum
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from django.utils import timezone
+from uuid import uuid4  # <-- en la cabecera del archivo
+
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+
+
 
 
 # -----------------------
@@ -213,6 +221,57 @@ def reservar(request):
         return JsonResponse({"success": False, "error": "Habitación no encontrada"}, status=404)
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=400)
+    
+   
+CANCEL_MIN_HOURS = 48
+ESTADOS_CANCELABLES = {"pendiente", "pagada", "confirmada"}
+
+
+
+@csrf_exempt
+def cancelar_reserva(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+        rid = payload.get('id')
+        email = payload.get('email')
+        if not rid or not email:
+            return JsonResponse({'success': False, 'error': 'Faltan datos'}, status=400)
+
+        # ⬇️ usa el email del usuario relacionado por la FK id_usuario
+        reserva = (Reserva.objects
+                   .select_related('id_usuario')
+                   .get(id=rid, id_usuario__email=email))
+
+        estado = (reserva.estado or '').lower()
+        if estado not in ESTADOS_CANCELABLES:
+            return JsonResponse({'success': False, 'error': 'El estado no permite cancelación'}, status=400)
+
+        if not reserva.entrada:
+            return JsonResponse({'success': False, 'error': 'Fecha de entrada inválida'}, status=400)
+
+        ahora = timezone.now()
+        diff_hours = (reserva.entrada - ahora).total_seconds() / 3600.0
+        if diff_hours < CANCEL_MIN_HOURS:
+            return JsonResponse(
+                {'success': False,
+                 'error': f'No se puede cancelar a menos de {CANCEL_MIN_HOURS} horas de la entrada'},
+                status=400
+            )
+
+        # (Opcional) reembolso según antelación
+        refund = 1.0 if diff_hours >= 24*7 else (0.5 if diff_hours >= CANCEL_MIN_HOURS else 0.0)
+
+        reserva.estado = 'cancelada'
+        reserva.save(update_fields=['estado'])
+
+        return JsonResponse({'success': True, 'estado': 'cancelada', 'refund_percent': int(refund*100)})
+
+    except Reserva.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Reserva no encontrada o no pertenece al usuario'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 # -----------------------
 # Listar reservas (empleado/admin)
@@ -421,44 +480,43 @@ def mis_reservas(request):
         return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 
-@api_view(['POST'])
+@csrf_exempt
 def pagar_reserva(request):
-    """
-    Body: { "reserva_id": 123, "metodoPago": "tarjeta" }
-    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Método no permitido"}, status=405)
     try:
-        data = request.data
-        reserva_id = data.get("reserva_id")
-        metodo = data.get("metodoPago", "tarjeta")
-        if not reserva_id:
-            return JsonResponse({"success": False, "error": "Falta reserva_id"}, status=400)
+        payload = json.loads(request.body.decode("utf-8"))
+        rid = payload.get("id")
+        email = payload.get("email")
+        metodo = payload.get("metodoPago") or "webpay"
 
-        reserva = Reserva.objects.get(id=reserva_id)
-        if reserva.estado == "confirmada":
-            return JsonResponse({"success": False, "error": "La reserva ya está confirmada"}, status=400)
+        if not rid or not email:
+            return JsonResponse({"success": False, "error": "Faltan datos"}, status=400)
 
-        pago = Pagos.objects.create(
+        # Validar propiedad de la reserva por email del usuario
+        reserva = (Reserva.objects
+                   .select_related("id_usuario")
+                   .get(id=rid, id_usuario__email=email))
+
+        if (reserva.estado or "").lower() != "pendiente":
+            return JsonResponse({"success": False, "error": "La reserva no está pendiente"}, status=400)
+
+        # aquí iría la integración real con WebPay/TPV...
+        # Simulación de aprobación:
+        id_tx = f"TX-{uuid4()}"
+        Pagos.objects.create(
             id_reserva=reserva,
             monto=reserva.monto_total,
             metodo_de_pago=metodo,
-            id_transaccion=str(uuid.uuid4()),
-            estado="aprobado"
+            id_transaccion=id_tx,
+            estado="aprobado",      # o "capturado"
         )
+
         reserva.estado = "confirmada"
         reserva.save(update_fields=["estado"])
 
-        return JsonResponse({
-            "success": True,
-            "mensaje": "Pago realizado y reserva confirmada",
-            "reserva_id": reserva.id,
-            "pago": {
-                "metodo": pago.metodo_de_pago,
-                "estado": pago.estado,
-                "id_transaccion": pago.id_transaccion
-            }
-        })
-
+        return JsonResponse({"success": True, "estado": "confirmada", "id_transaccion": id_tx})
     except Reserva.DoesNotExist:
-        return JsonResponse({"success": False, "error": "Reserva no encontrada"}, status=404)
+        return JsonResponse({"success": False, "error": "Reserva no encontrada o no pertenece al usuario"}, status=404)
     except Exception as e:
-        return JsonResponse({"success": False, "error": str(e)}, status=400)
+        return JsonResponse({"success": False, "error": str(e)}, status=500)

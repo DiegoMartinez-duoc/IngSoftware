@@ -1,9 +1,63 @@
+/* =========================================
+   VISTA CLIENTE - ESTILOS COMPLETOS
+   Enfoque: que el saludo "Bienvenido, {nombre}"
+   SIEMPRE sea visible y no quede tapado/oculto.
+   ========================================= */
+
 /* Contenedor general */
+/* Botón cancelar – estado normal (habilitado) */
+.btn-cancelar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 10px;
+
+  background: #ef4444;     /* rojo (Tailwind red-500 aprox) */
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+
+  box-shadow: 0 8px 18px rgba(239, 68, 68, .35);
+  transition: transform .08s ease, box-shadow .12s ease, background .12s ease, opacity .12s ease;
+}
+
+/* Hover solo si está habilitado */
+.btn-cancelar:hover:not(:disabled) {
+  background: #dc2626;     /* rojo más oscuro */
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(220, 38, 38, .45);
+}
+
+/* Focus accesible */
+.btn-cancelar:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, .25);
+}
+
+/* Estado deshabilitado — grisado claro, sin sombra ni hover */
+.btn-cancelar:disabled {
+  background: #e5e7eb;     /* gris claro */
+  color: #94a3b8;          /* texto gris */
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+  border: 1px solid #e5e7eb;
+  opacity: 1;              /* evita que herede opacidad baja de otros estilos */
+}
+
+
 .cliente-container {
   min-height: 100vh;
   width: 100%;
+  border-radius: 8px;
   padding: 24px;
   background: #f3f7fb;
+  position: relative;      /* defensivo contra overlays externos */
+  z-index: 1;
 }
 
 /* Header con saludo y botón */
@@ -13,21 +67,40 @@
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 12px;
+  position: relative;      /* que el saludo quede por sobre pseudo-elementos */
+  z-index: 2;
 }
 
+/* --- Saludo principal --- */
+/* Estilo general por si en otro CSS existe .texto */
 .texto {
   margin: 0;
   font-weight: 800;
   font-size: clamp(20px, 3.2vw, 28px);
 }
+
+/* Fuerza del color/visibilidad SOLO en este header para evitar choques */
+.cliente-header .texto {
+  color: #0f172a;
+  display: block;
+  position: relative;
+  z-index: 3;              /* encima de banners/overlays */
+}
+
+/* Subtítulo bajo el saludo */
 .subtexto {
   margin: 2px 0 0 0;
   color: #334155;
   font-size: 0.95rem;
 }
 
-.header-actions { display: flex; gap: 10px; }
+/* Acciones del header */
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
 
+/* Botón secundario (Cerrar sesión) */
 .btn-secundario {
   border: 1px solid #cbd5e1;
   background: #0ee347;
@@ -35,12 +108,23 @@
   border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
-  transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease;
+  transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
+  color: #0f172a;
 }
-.btn-secundario:hover { box-shadow: 0 6px 14px rgba(0,0,0,.06); transform: translateY(-1px); border-color: #94a3b8; }
-.btn-secundario:focus { outline: none; box-shadow: 0 0 0 3px rgba(14,165,233,.25); }
+.btn-secundario:hover {
+  box-shadow: 0 6px 14px rgba(0,0,0,.06);
+  transform: translateY(-1px);
+  border-color: #94a3b8;
+  background: #0dd43f;
+}
+.btn-secundario:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(14,165,233,.25);
+}
 
-/* Grid de tarjetas */
+/* ==========================
+   GRID DE HABITACIONES
+   ========================== */
 .grid-habitaciones {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -55,7 +139,7 @@
   }
 }
 
-/* Tarjeta */
+/* Tarjeta de habitación */
 .card-habitacion {
   background: #fff;
   border-radius: 14px;
@@ -65,15 +149,43 @@
   flex-direction: column;
   transition: transform .12s ease, box-shadow .16s ease;
 }
-.card-habitacion:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.10); }
+.card-habitacion:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0,0,0,.10);
+}
 
-.card-media { aspect-ratio: 16 / 9; overflow: hidden; background: #f1f5f9; }
-.card-img { width: 100%; height: 100%; display: block; object-fit: cover; }
+/* Media de la tarjeta */
+.card-media {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #f1f5f9;
+}
+.card-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
 
-.card-body { padding: 12px 14px 16px; display: grid; gap: 8px; }
-.card-title { margin: 0; font-size: 1.1rem; font-weight: 800; color: #0f172a; }
-.card-desc { font-size: .95rem; color: #334155; min-height: 3.2em; }
+/* Cuerpo de la tarjeta */
+.card-body {
+  padding: 12px 14px 16px;
+  display: grid;
+  gap: 8px;
+}
+.card-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+.card-desc {
+  font-size: .95rem;
+  color: #334155;
+  min-height: 3.2em;      /* 2 líneas aprox */
+}
 
+/* Meta de la tarjeta (capacidad/precio) */
 .card-meta {
   display: flex;
   justify-content: space-between;
@@ -81,7 +193,7 @@
   color: #0f172a;
 }
 
-/* Botones acción */
+/* Botón primario (Reservar) */
 .btn-primario {
   margin-top: 6px;
   padding: 10px 12px;
@@ -93,11 +205,25 @@
   cursor: pointer;
   transition: transform .08s ease, box-shadow .12s ease, background .12s ease;
 }
-.btn-primario:hover { box-shadow: 0 8px 18px rgba(14,165,233,.35); transform: translateY(-1px); background: #0392d5; }
-.btn-primario:focus { outline: none; box-shadow: 0 0 0 3px rgba(14,165,233,.25); }
-.btn-primario:disabled { background: #94a3b8; cursor: not-allowed; box-shadow: none; transform: none; }
+.btn-primario:hover {
+  box-shadow: 0 8px 18px rgba(14,165,233,.35);
+  transform: translateY(-1px);
+  background: #0392d5;
+}
+.btn-primario:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(14,165,233,.25);
+}
+.btn-primario:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
 
-/* Estados */
+/* ==========================
+   ESTADOS Y MENSAJES
+   ========================== */
 .error {
   background: #fee2e2;
   color: #991b1b;
@@ -107,16 +233,32 @@
   margin: 8px 0;
 }
 
-/* ===== Skeleton de carga (placeholders) ===== */
+/* ==========================
+   SKELETON DE CARGA
+   ========================== */
 .skeleton .card-media { background: #e5e7eb; }
 .sk-line { height: 12px; background: #e5e7eb; border-radius: 8px; margin: 8px 0; }
 .sk-title { height: 16px; }
 .sk-line.short { width: 60%; }
 .sk-btn { height: 36px; background: #e5e7eb; border-radius: 10px; margin-top: 6px; }
 
-/* ====== SOPORTE VISTA RESERVAS (paso a paso) ====== */
-.gran-wrapper{
-  width: min(900px, 100%);
+/* Animación sutil */
+@keyframes pulse {
+  0% { opacity: .85; }
+  50% { opacity: .55; }
+  100% { opacity: .85; }
+}
+.skeleton .card-media,
+.skeleton .sk-line,
+.skeleton .sk-btn {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* ==========================
+   VISTA RESERVAS (FORM)
+   ========================== */
+.gran-wrapper {
+  width: min(1403px, 100%);
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
@@ -124,13 +266,12 @@
   box-shadow: 0 8px 20px rgba(15,23,42,.06);
   margin-top: 10px;
 }
-
-.gran-wrapper .texto{ color:#0f172a; margin-bottom:8px; }
+.gran-wrapper .texto { color: #0f172a; margin-bottom: 8px; }
 
 .gran-wrapper input[type="date"],
 .gran-wrapper input[type="text"],
 .gran-wrapper input[type="email"],
-.gran-wrapper select{
+.gran-wrapper select {
   width: min(420px, 100%);
   height: 40px;
   padding: 0 12px;
@@ -142,23 +283,21 @@
   margin: 6px 10px 6px 0;
 }
 
-.gran-wrapper .error{
-  background:#fee2e2;
-  color:#991b1b;
-  border:1px solid #fecaca;
-  border-radius:10px;
-  padding:10px 12px;
-  display:inline-block;
-  margin:8px 0;
+.gran-wrapper .error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: inline-block;
+  margin: 8px 0;
 }
 
-
-/* Animación sutil al skeleton */
-@keyframes pulse {
-  0% { opacity: .85; }
-  50% { opacity: .55; }
-  100% { opacity: .85; }
+/* ==========================
+   DEFENSIVOS CONTRA OVERLAYS
+   (por si hay ::before globales en el layout)
+   ========================== */
+.cliente-container::before {
+  /* Si tu layout global usa overlays, asegúrate de que estén debajo */
+  z-index: 0;
 }
-.skeleton .card-media,
-.skeleton .sk-line,
-.skeleton .sk-btn { animation: pulse 1.5s ease-in-out infinite; }

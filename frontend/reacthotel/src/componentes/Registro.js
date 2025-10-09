@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import '../estilos/Registro.css'; 
+import '../estilos/Registro.css';
+
+const API_BASE = 'http://localhost:8000/hotel';
 
 const Registro = ({ onViewChange }) => {
   const [formData, setFormData] = useState({
@@ -9,123 +11,148 @@ const Registro = ({ onViewChange }) => {
     telefono: ''
   });
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [serverMsg, setServerMsg] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevState => ({
-      ...prevState,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (error) setError(null);
+    if (serverMsg) setServerMsg(null);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    console.log('Datos del formulario:', formData);
+  // Guarda el usuario igual que en Login
+  const saveUser = (data) => {
+    const usuario = {
+      email: data.email ?? formData.email ?? '',
+      nombre: data.nombre ?? formData.nombre ?? '',
+      telefono: data.telefono ?? formData.telefono ?? '',
+      rol: data.rol ?? '',
+      tipo: data.tipo ?? 'usuario',
+    };
+    localStorage.setItem('user', JSON.stringify(usuario));
+    window.dispatchEvent(new Event('storage'));
+  };
 
-    fetchData();
- 
-    if (!formData.email || !formData.contrasena) {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!formData.email || !formData.contrasena || !formData.nombre || !formData.telefono) {
       setError('Por favor, complete todos los campos');
-    } else {
-      setError(null);
-     
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_BASE}/registro/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(text || `Error HTTP ${res.status}`);
+      }
+
+      const response = await res.json();
+
+      // Asumo que el backend retorna { success: true, usuario: {...} } o similar
+      if (response?.success) {
+        const u = response.usuario ?? response; // fallback
+        saveUser(u);
+        onViewChange?.('inicioCliente'); // ir directo al inicio del cliente
+      } else {
+        setServerMsg(response?.error || 'No se pudo registrar el usuario.');
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      setServerMsg('No se pudo registrar. Intente nuevamente.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const fetchData = () => {
-    fetch("http://localhost:8000/hotel/registro/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    })
-      .then(res => res.json())
-      .then(response => {
-
-        const data = response.nombre;
-        console.log('Registro exitoso:', data);
-        
-        handleGoToInicioCliente();
-      })
-      .catch(error => {
-        console.error("Error:", error);
-        
-      });
-  };
-
-  const handleGoToLogin = () => {
-    onViewChange("login");
-  };
-
-  const handleGoToInicioCliente = () => {
-    onViewChange("inicioCliente");
-  };
+  const handleGoToLogin = () => onViewChange('login');
 
   return (
     <div className="login-container">
       <div className="wrapper2">
-
-        <h2 className="heading">Por favor, registrate para acceder a nuestros servicios</h2>
+        <h2 className="heading">Por favor, regístrate para acceder a nuestros servicios</h2>
 
         <div className="actions">
-          <span className="divider" onClick={handleGoToLogin}>¿Ya tienes cuenta? Ingresa aquí</span>
+          <span className="divider" onClick={handleGoToLogin}>
+            ¿Ya tienes cuenta? Ingresa aquí
+          </span>
         </div>
-          
-          
-         
-        
 
         <form onSubmit={handleSubmit} id="registro-formulario" className="form" noValidate>
           <div className="primera-linea">
-            <input 
-              name="email" 
-              type="email" 
-              className="form-input" 
-              id="email-input" 
-              placeholder={error ? "Correo invalido" : "Ingresa tu email"} 
+            <input
+              name="email"
+              type="email"
+              className="form-input"
+              id="email-input"
+              placeholder={error ? 'Correo inválido' : 'Ingresa tu email'}
               value={formData.email}
               onChange={handleChange}
-              required 
+              required
+              autoComplete="email"
             />
           </div>
+
           <div className="segunda-linea">
-            <input 
-              name="contrasena" 
-              type="password" 
-              className="form-input" 
-              id="contrasena-input" 
-              placeholder="Ingresa tu contraseña" 
+            <input
+              name="contrasena"
+              type="password"
+              className="form-input"
+              id="contrasena-input"
+              placeholder="Ingresa tu contraseña"
               value={formData.contrasena}
               onChange={handleChange}
-              required 
+              required
+              autoComplete="new-password"
             />
           </div>
+
           <div className="tercera-linea">
-            <input 
-              name="nombre" 
-              type="text" 
-              className="form-input" 
-              id="nombre-input" 
-              placeholder="Ingresa tu nombre" 
+            <input
+              name="nombre"
+              type="text"
+              className="form-input"
+              id="nombre-input"
+              placeholder="Ingresa tu nombre"
               value={formData.nombre}
               onChange={handleChange}
-              required 
+              required
+              autoComplete="name"
             />
           </div>
+
           <div className="cuarta-linea">
-            <input 
-              name="telefono" 
-              type="tel" 
-              className="form-input" 
-              id="telefono-input" 
-              placeholder="Ingresa tu telefono" 
+            <input
+              name="telefono"
+              type="tel"
+              className="form-input"
+              id="telefono-input"
+              placeholder="Ingresa tu teléfono"
               value={formData.telefono}
               onChange={handleChange}
-              required 
+              required
+              autoComplete="tel"
             />
           </div>
+
+          {(error || serverMsg) && (
+            <p className="feedback" role="alert">
+              {error || serverMsg}
+            </p>
+          )}
+
           <div className="boton">
-            <button type="submit" className="btn" id="btn-registro">REGISTRAR</button>
+            <button type="submit" className="btn" id="btn-registro" disabled={loading}>
+              {loading ? 'Registrando…' : 'REGISTRAR'}
+            </button>
           </div>
         </form>
       </div>

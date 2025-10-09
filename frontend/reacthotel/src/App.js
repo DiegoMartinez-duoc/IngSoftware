@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import logo1 from './img/logo1.svg';
 
+
 import Login from "./componentes/Login";
 import Registro from "./componentes/Registro";
 
@@ -27,28 +28,33 @@ function App() {
   return (
     <div className="app-container">
       <header className="barra-superior">
-        <div className="nav-options" style={{ display: currentView == "inicioCliente" || currentView == "reservasCliente" ? "flex" : "none" }}>
-          <div 
-            className={`nav-option ${currentView === "inicioCliente" ? "active" : ""}`} 
-            onClick={() => setCurrentView("inicioCliente")}
-            title="Habitaciones"
-          >
-            <span>Habitaciones</span>
-          </div>
-          <div 
-            className={`nav-option ${currentView === "reservasCliente" ? "active" : ""}`} 
-            onClick={() => setCurrentView("reservasCliente")}
-            title="Reservas"
-          >
-            <span>Reservas</span>
-          </div>
-          <div class="centro-nav">
-                <input type="text" placeholder="Buscar" class="buscador" required/>
-          </div>
-          <button className="boton-logout" onClick={() => {handleLogout()}}>
-              Cerrar sesión
-          </button>
-        </div>
+      <div
+  className="nav-options"
+  style={{ display: currentView === "inicioCliente" || currentView === "reservasCliente" ? "flex" : "none" }}
+>
+  <div
+    className={`nav-option ${currentView === "inicioCliente" ? "active" : ""}`}
+    onClick={() => setCurrentView("inicioCliente")}
+    title="Habitaciones"
+  >
+    <span>Habitaciones</span>
+  </div>
+
+  <div
+    className={`nav-option ${currentView === "reservasCliente" ? "active" : ""}`}
+    onClick={() => setCurrentView("reservasCliente")}
+    title="Reservas"
+  >
+    <span>Reservas</span>
+  </div>
+
+  
+
+  {/* el margen auto empuja este botón al extremo derecho */}
+  <button className="boton-logout" onClick={handleLogout}>
+    Cerrar sesión
+  </button>
+</div>
 
         <div className="nav-options" style={{ display: currentView == "adminPanel" 
                                                        || currentView == "adminReservas" 

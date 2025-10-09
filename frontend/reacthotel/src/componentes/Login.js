@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import '../estilos/Login.css';
 
+const API_BASE = 'http://localhost:8000/hotel';
+
 const Login = ({ onViewChange }) => {
   const [formData, setFormData] = useState({ email: '', contrasena: '' });
   const [error, setError] = useState(null);
@@ -14,19 +16,24 @@ const Login = ({ onViewChange }) => {
     if (serverMsg) setServerMsg(null);
   };
 
+  // ==== GUARDA USUARIO COMO "user" (coherente con InicioCliente) ====
   const saveUser = (data) => {
-    // data viene de /hotel/login/
+    // Normaliza campos por si el backend usa otros nombres
     const usuario = {
-      email: data.email,
-      nombre: data.nombre,
-      rol: data.rol,     // p.ej. "Cliente", "Empleado", etc.
-      tipo: data.tipo,   // "usuario" | "empleado" | "admin" | "duena"
+      email: data.email ?? formData.email ?? '',
+      nombre: data.nombre ?? data.name ?? data.fullName ?? data.username ?? '',
+      telefono: data.telefono ?? '',
+      rol: data.rol ?? '',
+      tipo: data.tipo ?? 'usuario', // usuario | empleado | admin | duena
     };
-    localStorage.setItem('usuarioActual', JSON.stringify(usuario));
+    localStorage.setItem('user', JSON.stringify(usuario));
+    // notifica a otros componentes
+    window.dispatchEvent(new Event('storage'));
   };
 
   const clearUser = () => {
-    localStorage.removeItem('usuarioActual');
+    localStorage.removeItem('user');
+    window.dispatchEvent(new Event('storage'));
   };
 
   const routeByTipo = (tipo) => {
@@ -44,7 +51,8 @@ const Login = ({ onViewChange }) => {
         onViewChange?.('adminPanel');
         break;
       default:
-        setServerMsg('Rol/tipo no reconocido. Contacte al administrador.');
+        onViewChange?.('inicioCliente'); // fallback
+        break;
     }
   };
 
@@ -58,7 +66,7 @@ const Login = ({ onViewChange }) => {
 
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:8000/hotel/login/', {
+      const res = await fetch(`${API_BASE}/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -72,10 +80,10 @@ const Login = ({ onViewChange }) => {
       const response = await res.json();
 
       if (response?.valido === true) {
-        // 1) Guardar sesión
+        // 1) Guardar sesión (clave "user")
         saveUser(response);
-        // 2) Rutear por "tipo" (no por "rol")
-        routeByTipo(response.tipo);
+        // 2) Rutear por tipo (si viene); si no, a inicioCliente
+        routeByTipo(response.tipo ?? 'usuario');
       } else {
         clearUser();
         setServerMsg(response?.mensaje || 'Credenciales inválidas o usuario no encontrado.');
@@ -104,7 +112,6 @@ const Login = ({ onViewChange }) => {
             ¿No tienes cuenta? Regístrate aquí
           </span>
           <span className="divider">·</span>
-          {/* Puedes agregar más acciones si quieres */}
         </div>
 
         <form onSubmit={handleSubmit} id="registro-formulario" className="form" noValidate>

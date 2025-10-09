@@ -1,15 +1,14 @@
-* {
-  box-sizing: border-box;
-  overflow-x: hidden;
-}
-
+/* ===== Reset básico ===== */
+* { box-sizing: border-box; }
 body {
   font-family: 'Segoe UI', sans-serif;
   background-color: #1e1e1e;
   color: #f0f0f0;
   min-height: 100vh;
+  margin: 0;
 }
 
+/* ===== Layout general ===== */
 .app-container {
   overflow-x: hidden;
   display: flex;
@@ -18,117 +17,169 @@ body {
   position: relative;
 }
 
+/* ===== Barra superior ===== */
 .barra-superior {
   width: 100%;
-  position: absolute;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 1rem;
   background-color: #050708;
   padding: 0.8rem 2rem;
   height: 100px;
-  box-shadow: 0 2px 10px rgb(0, 0, 0);
-  position: relative;
+  box-shadow: 0 2px 10px rgb(0 0 0);
+  position: relative; /* para centrar el logo con absolute */
   z-index: 100;
 }
 
+/* Bloques de navegación (cliente, admin, empleado) */
 .nav-options {
   display: flex;
-  gap: 1.5rem;
   align-items: center;
+  gap: 1rem;
+  flex: 1;      /* ocupa el espacio disponible */
+  z-index: 2;   /* por encima del logo centrado */
 }
 
-.nav-option {
-  display: flex;
+/* ===== Botones de navegación (Habitaciones / Reservas) ===== */
+.nav-option{
+  --pill-bg: rgba(255,255,255,.06);
+  --pill-fg: #e5e7eb;
+  --pill-border: rgba(255,255,255,.18);
+  --pill-bg-hover: rgba(255,255,255,.12);
+  --pill-fg-hover: #ffffff;
+  --pill-bg-active: linear-gradient(90deg,#10b981,#06b6d4);
+  --pill-fg-active: #0b1220;
+  --shadow: 0 6px 18px rgba(0,0,0,.25);
+
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
+  gap: .5rem;
+  padding: 10px 16px;
+  border-radius: 999px;
   cursor: pointer;
-  transition: all 0.3s;
-  background-color: #ffffff;
-  color: #000000;
+  font-weight: 700;
+  letter-spacing: .2px;
+
+  background: var(--pill-bg);
+  color: var(--pill-fg);
+  border: 1px solid var(--pill-border);
+  backdrop-filter: blur(4px);
+
+  transition:
+    background .18s ease,
+    color .18s ease,
+    border-color .18s ease,
+    transform .08s ease,
+    box-shadow .18s ease;
+  position: relative;
+  isolation: isolate;
 }
 
-.nav-option:hover {
-  background-color: #454545;
-  color: #fff;
+.nav-option::after{
+  content:"";
+  position:absolute; inset:-2px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 0 rgba(56,189,248,.0);
+  transition: box-shadow .18s ease;
+  pointer-events:none;
 }
 
-.nav-option.active {
-  background-color: #000000;
-  color: #fff;
+.nav-option:hover{
+  background: var(--pill-bg-hover);
+  color: var(--pill-fg-hover);
+  transform: translateY(-1px);
 }
 
-.buscador {
-    width: 100%;
-    padding: 10px 10px 10px 35px;
-    font-size: 14px;
-    /* background: url('/buscarIcon.png') no-repeat left 10px center/20px; */
-    background-color: #757474;
-    border: none;
-    border-radius: 10px;
-    color: white;
+.nav-option:hover::after{
+  box-shadow: 0 0 0 6px rgba(56,189,248,.18);
+}
+
+.nav-option:active{ transform: translateY(0); }
+
+.nav-option.active{
+  background: var(--pill-bg-active);
+  color: var(--pill-fg-active);
+  border-color: transparent;
+  box-shadow: var(--shadow);
+}
+
+.nav-option:focus-visible{
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(56,189,248,.35);
 }
 
 .nav-option span {
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 700;
 }
 
+/* Buscador centrado en el espacio intermedio */
+.centro-nav { flex: 1; max-width: 420px; }
+.buscador {
+  width: 100%;
+  padding: 10px 10px 10px 35px;
+  font-size: 14px;
+  background-color: #757474;
+  border: none;
+  border-radius: 10px;
+  color: white;
+}
+
+/* Botón logout alineado a la derecha */
 .boton-logout {
-  color: white; 
-  background-color: #4caf50;
-  border: 2px solid #000000; 
-  border-radius: 6px;
-  padding: 8px 0px;
-  position: absolute;
-  left:1391px;
+  margin-left: auto;   /* empuja al extremo derecho */
+  border: 1px solid #cbd5e1;
+  background: #0ee347;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform .08s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
+  color: #0f172a;
+  position: relative;
+  z-index: 3;
+}
+.boton-logout:hover {
+  box-shadow: 0 6px 14px rgba(0,0,0,.06);
+  transform: translateY(-1px);
+  border-color: #94a3b8;
+  background: #0dd43f;
+}
+.boton-logout:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(14,165,233,.25);
 }
 
-
-/* El contenedor ocupa toda la franja y centra su contenido */
+/* ===== Logo centrado en la barra ===== */
 .logo-container{
-  position: absolute;      /* dentro de la barra */
-  inset: 0;                /* left:0; right:0; top:0; bottom:0 */
+  position: absolute;
+  inset: 0;
   display: flex;
-  align-items: center;     /* centra vertical */
-  justify-content: center; /* centra horizontal */
-  z-index: 2;              /* sobre el fondo, bajo overlays si los hay */
-  pointer-events: none;    /* no bloquea clicks de los menús */
+  align-items: center;
+  justify-content: center;
+  z-index: 1;           /* debajo de nav-options y botón */
+  pointer-events: none; /* no bloquea clics */
 }
-
-/* El logo se estira a lo ancho, mantiene 30px de alto */
 .logo-img{
-  height: 132px;            /* fijo */
- width: 300px;           /* ocupa todo el ancho del contenedor */
-  object-fit: contain;       /* rellena el ancho, puede recortar un poco */
+  height: 132px;
+  width: 300px;
+  object-fit: contain;
   display: block;
-  pointer-events: auto;    /* quita si no necesitas clicks en el logo */
+  pointer-events: auto;
 }
-.logo {
-  color: #ffffff;
-}
+.logo { color: #ffffff; }
 
-.main-content {
-  flex: 1;
-  padding-top: 70px; 
-}
+/* ===== Contenido principal ===== */
+.main-content { flex: 1; padding-top: 100px; }
+.view-container { height: 100%; padding: 2rem; overflow-y: auto; background-color: #1e1e1e; }
 
-.view-container {
-  height: 100%;
-  padding: 2rem;
-  overflow-y: auto;
-  background-color: #1e1e1e;
-}
-
+/* ===== Responsive ===== */
 @media (max-width: 768px) {
   .barra-superior {
     padding: 0.8rem 1rem;
     flex-wrap: wrap;
     height: auto;
   }
-  
   .nav-options {
     order: 2;
     width: 100%;
@@ -136,18 +187,16 @@ body {
     margin-top: 0.5rem;
     gap: 0.8rem;
   }
-  
+  .centro-nav { max-width: none; }
   .logo-container {
     position: static;
     transform: none;
     order: 1;
+    width: 100%;
+    display: flex;
+    justify-content: center;
   }
-  
-  .nav-option span {
-    display: none;
-  }
-  
-  .main-content {
-    padding-top: 100px;
-  }
+  .nav-option { padding: 8px 12px; font-weight: 600; }
+  .nav-option span { display: none; }
+  .main-content { padding-top: 100px; }
 }

@@ -61,7 +61,8 @@ const CatalogoEmpleado = ({ onLogout }) => {
           nombre: formData.clienteNombre,
           telefono: formData.clienteTelefono,
           habitacion: formData.habitacion,
-          metodoPago: formData.metodoPago,
+          metodoPago: formData.pagarAhora ? formData.metodoPago : undefined, // ⬅️
+
           fechaInicio: formData.fechaInicio,
           fechaFin: formData.fechaFin,
         }),

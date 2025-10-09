@@ -11,6 +11,7 @@ urlpatterns = [
     path('listar_habitaciones/', views.listar_habitaciones, name='listar_habitaciones'),
     path('mis_reservas/', views.mis_reservas, name='mis_reservas'),
     path('pagar_reserva/', views.pagar_reserva, name='pagar_reserva'),  # opcional 
+    path('cancelar_reserva/', views.cancelar_reserva, name='cancelar_reserva'),
 
     # ---------- Empleado ----------
     path('reservas/', views.listar_reservas, name='listar_reservas'),

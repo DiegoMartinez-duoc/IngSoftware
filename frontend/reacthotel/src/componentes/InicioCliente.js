@@ -1,24 +1,19 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../estilos/Cliente.css";
 
 const API_BASE = "http://localhost:8000/hotel";
-const MEDIA_BASE = "http://localhost:8000/media/"; // MUY IMPORTANTE para las imágenes
+const MEDIA_BASE = "http://localhost:8000/media/"; // para imágenes de la BD
 
 const InicioCliente = ({ onViewChange }) => {
+  // ====== ESTADOS ======
   const [habitaciones, setHabitaciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
 
-  // Traer usuario guardado (desde Registro/Login)
-  const user = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem("user")) || null;
-    } catch {
-      return null;
-    }
-  }, []);
+  // Usuario (lectura reactiva y tolerante)
+  const [user, setUser] = useState(null);
 
-  // Formatear CLP (bonito)
+  // ====== UTIL: FORMATEO CLP ======
   const fmtCLP = (n) =>
     new Intl.NumberFormat("es-CL", {
       style: "currency",
@@ -26,7 +21,47 @@ const InicioCliente = ({ onViewChange }) => {
       maximumFractionDigits: 0,
     }).format(n ?? 0);
 
-  // Cargar habitaciones disponibles
+  // ====== LECTURA REACTIVA DEL USUARIO ======
+  useEffect(() => {
+    const readUser = () => {
+      try {
+        const raw =
+          localStorage.getItem("user") ||
+          localStorage.getItem("usuario") ||
+          localStorage.getItem("authUser");
+
+        if (!raw) return setUser(null);
+
+        const u = JSON.parse(raw);
+        const nombre =
+          u?.nombre ?? u?.name ?? u?.Nombre ?? u?.fullName ?? u?.username ?? null;
+
+        setUser(nombre ? { ...u, nombre } : u ?? null);
+      } catch {
+        setUser(null);
+      }
+    };
+
+    // leer al montar
+    readUser();
+
+    // si cambia en otra pestaña/ventana
+    const onStorage = (e) => {
+      if (["user", "usuario", "authUser"].includes(e.key)) readUser();
+    };
+
+    // al recuperar foco (si volviste desde login u otra vista)
+    const onFocus = () => readUser();
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
+
+  // ====== CARGA DE HABITACIONES ======
   useEffect(() => {
     const fetchHabitaciones = async () => {
       try {
@@ -51,64 +86,47 @@ const InicioCliente = ({ onViewChange }) => {
     fetchHabitaciones();
   }, []);
 
-  // Reservar
-  const handleReservar = async (h) => {
+  // ====== IR A RESERVAS (sin reservar aún) ======
+  const irAReservas = (h) => {
+    // si no está logueado, ve a login
     if (!user) {
-      alert("Inicia sesión para reservar.");
       onViewChange?.("login");
       return;
     }
-    try {
-      const body = {
-        email: user.email,
-        nombre: user.nombre,
-        telefono: user.telefono || "", // si lo guardas en localStorage, úsalo
-        habitacion: h.nombre,          // ¡ojo! tu view busca por nombre
-        metodoPago: "webpay",
-      };
-      const res = await fetch(`${API_BASE}/reservar/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const json = await res.json();
-      if (json.success) {
-        // Aquí puedes usar un modal. Por ahora, simple alerta.
-        alert(
-          `✅ Reserva completada\n` +
-          `Habitación: ${json.habitacion}\n` +
-          `Total: ${fmtCLP(json.total)}\n` +
-          `Código QR: ${json.codigoQR}`
-        );
-      } else {
-        alert(json.error || "No se pudo completar la reserva");
-      }
-    } catch (e) {
-      alert("Error de conexión al reservar");
-    }
+    // Deja preseleccionada la habitación para el flujo de reservas
+    sessionStorage.setItem("preReservaHabitacionId", String(h.id));
+    onViewChange?.("reservasCliente");
   };
 
-  const logout = () => {
-    localStorage.removeItem("user");
-    onViewChange?.("login");
-  };
-
+  // ====== RENDER ======
   return (
     <div className="cliente-container">
       <header className="cliente-header">
         <div>
-          <h1 className="texto">
-            {user ? `Bienvenido, ${user.nombre}` : "Bienvenido"}
+          <h1 style={{ color: "#111", position: "relative", zIndex: 5 }}>
+            {(() => {
+              // Fallback directo a localStorage por si el estado aún no cargó
+              const u =
+                user ||
+                (() => {
+                  try {
+                    return JSON.parse(localStorage.getItem("user") || "null");
+                  } catch {
+                    return null;
+                  }
+                })();
+              const nombre =
+                u?.nombre ??
+                u?.name ??
+                u?.Nombre ??
+                u?.fullName ??
+                u?.username ??
+                null;
+              return nombre ? `Bienvenido, ${nombre}` : "Bienvenido";
+            })()}
           </h1>
           <p className="subtexto">Explora y reserva tu próxima habitación</p>
         </div>
-       <div className="header-actions">
-  {user && (
-    <button className="btn-secundario" onClick={logout}>
-      Cerrar sesión
-    </button>
-  )}
-</div>
       </header>
 
       {loading && (
@@ -136,18 +154,12 @@ const InicioCliente = ({ onViewChange }) => {
           )}
 
           {habitaciones.map((h) => {
-            // *** Lo más importante: cómo cargas la imagen desde la BD ***
-            // El backend envía, por ejemplo: "habitaciones/doble1.jpg"
-            // Se debe renderizar como: http://localhost:8000/media/habitaciones/doble1.jpg
-            const imgSrc = h.imagen
-              ? `${MEDIA_BASE}${h.imagen}`
-              : "/img/Habitacion2";
-
+            const imgSrc = h.imagen ? `${MEDIA_BASE}${h.imagen}` : "/img/Habitacion2";
             return (
               <article key={h.id} className="card-habitacion">
                 <div className="card-media">
                   <img
-                    src={imgSrc}               // <= AQUÍ VA LA RUTA /media/ + h.imagen
+                    src={imgSrc}
                     alt={h.nombre}
                     className="card-img"
                     loading="lazy"
@@ -162,9 +174,8 @@ const InicioCliente = ({ onViewChange }) => {
                   </div>
                   <button
                     className="btn-primario"
-                    onClick={() => handleReservar(h)}
-                    disabled={!user}
-                    title={user ? "Reservar ahora" : "Inicia sesión para reservar"}
+                    onClick={() => irAReservas(h)}
+                    title="Ir a reservar"
                   >
                     Reservar
                   </button>

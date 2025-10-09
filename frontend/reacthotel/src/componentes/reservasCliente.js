@@ -1,11 +1,24 @@
 import React, { useEffect, useState } from "react";
 import "../estilos/Cliente.css";
 
-const getUsuarioActual = () => {
+// ==== Helpers de sesión (tolerantes) ====
+const readUser = () => {
   try {
-    const raw = localStorage.getItem("usuarioActual");
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
+    const raw =
+      localStorage.getItem("user") ||           // NUEVA clave
+      localStorage.getItem("usuarioActual");    // compatibilidad
+    if (!raw) return null;
+    const u = JSON.parse(raw);
+    return {
+      email: u?.email ?? "",
+      nombre: u?.nombre ?? u?.name ?? u?.username ?? "",
+      telefono: u?.telefono ?? "",
+      rol: u?.rol ?? "",
+      tipo: u?.tipo ?? "usuario",
+    };
+  } catch {
+    return null;
+  }
 };
 
 const ReservasCliente = () => {
@@ -14,7 +27,10 @@ const ReservasCliente = () => {
   const [seleccion, setSeleccion] = useState(null);
   const [error, setError] = useState("");
   const [reservaConfirmada, setReservaConfirmada] = useState(null);
-  const [refreshKey, setRefreshKey] = useState(0); // para refrescar "Mis reservas" tras reservar
+  const [refreshKey, setRefreshKey] = useState(0); // refrescar "Mis reservas" tras reservar
+
+  // usuario reactivo
+  const [user, setUser] = useState(() => readUser());
 
   const [formData, setFormData] = useState({
     fecha: "",
@@ -25,13 +41,33 @@ const ReservasCliente = () => {
     pagarAhora: true,
   });
 
-  // === 1) Al montar: auto-cargar email y nombre desde login ===
+  // === 0) Mantener sincronizado user desde localStorage ===
   useEffect(() => {
-    const u = getUsuarioActual();
-    if (u?.email) {
-      setFormData((prev) => ({ ...prev, email: u.email, nombre: u.nombre || prev.nombre }));
-    }
+    const refresh = () => setUser(readUser());
+    refresh();
+    const onStorage = (e) => {
+      // si cambia 'user' o la antigua 'usuarioActual', refresca
+      if (!e || !e.key || ["user", "usuarioActual"].includes(e.key)) refresh();
+    };
+    const onFocus = () => refresh(); // al volver de Login/Registro
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", onFocus);
+    };
   }, []);
+
+  // === 1) Al montar / cuando cambie user: auto-cargar email y nombre ===
+  useEffect(() => {
+    if (user?.email) {
+      setFormData((prev) => ({
+        ...prev,
+        email: user.email,
+        nombre: user.nombre || prev.nombre,
+      }));
+    }
+  }, [user?.email, user?.nombre]);
 
   // === 2) Cargar habitaciones ===
   useEffect(() => {
@@ -209,36 +245,50 @@ const ReservasCliente = () => {
             <button className="btn-primario" onClick={handleValidar}>Validar datos</button>
           </>
         )}
+{step === 5 && (
+  <>
+    {formData.pagarAhora ? (
+      <>
+        <p className="subtexto">Selecciona método de pago</p>
+        <select
+          name="metodoPago"
+          value={formData.metodoPago}
+          onChange={handleChange}
+          aria-label="Método de pago"
+        >
+          <option value="">--Seleccione--</option>
+          <option value="webpay">WebPay</option>
+          <option value="tarjeta">Tarjeta</option>
+          <option value="paypal">PayPal</option>
+        </select>
+        <p className="subtexto" style={{ marginTop: 6 }}>
+          Puedes cambiar a “pagar después” desmarcando la opción en el paso anterior.
+        </p>
+      </>
+    ) : (
+      <p className="subtexto" style={{ color:"#0f172a" }}>
+        Se registrará tu reserva como <b>pendiente</b>. Podrás pagar más tarde desde tu historial
+        o en recepción.
+      </p>
+    )}
 
-        {step === 5 && (
-          <>
-            {formData.pagarAhora ? (
-              <>
-                <p className="subtexto">Selecciona método de pago</p>
-                <select
-                  name="metodoPago"
-                  value={formData.metodoPago}
-                  onChange={handleChange}
-                >
-                  <option value="">--Seleccione--</option>
-                  <option value="tarjeta">Tarjeta</option>
-                  <option value="paypal">PayPal</option>
-                </select>
-              </>
-            ) : (
-              <p className="subtexto" style={{ color:"#0f172a" }}>
-                Se registrará tu reserva como <b>pendiente</b>. Podrás pagar más tarde desde tu historial
-                o en recepción.
-              </p>
-            )}
+    {error && <p className="error">{error}</p>}
 
-            {error && <p className="error">{error}</p>}
-            <button className="btn-secundario" onClick={prevStep}>Atrás</button>
-            <button className="btn-primario" onClick={handleReservar}>
-              {formData.pagarAhora ? "Proceder al pago" : "Confirmar reserva sin pagar"}
-            </button>
-          </>
-        )}
+    <button className="btn-secundario" onClick={prevStep}>Atrás</button>
+    <button
+      className="btn-primario"
+      onClick={handleReservar}
+      disabled={formData.pagarAhora && !formData.metodoPago}  // ⬅️ clave
+      title={
+        formData.pagarAhora && !formData.metodoPago
+          ? "Selecciona un método de pago para continuar"
+          : (formData.pagarAhora ? "Proceder al pago" : "Confirmar sin pagar")
+      }
+    >
+      {formData.pagarAhora ? "Proceder al pago" : "Confirmar reserva sin pagar"}
+    </button>
+  </>
+)}
 
         {step === 6 && reservaConfirmada && (
           <>
@@ -255,23 +305,25 @@ const ReservasCliente = () => {
         )}
       </div>
 
-      {/* MIS RESERVAS (se carga solo con el email del login) */}
-      <MisReservas key={refreshKey} />
+      {/* MIS RESERVAS (ahora usa user REACTIVO) */}
+      <MisReservas key={refreshKey} user={user} />
     </div>
   );
 };
 
-/* ---------- Subcomponente: MisReservas (lee email del login) ---------- */
-const MisReservas = () => {
+/* ---------- Subcomponente: MisReservas (lee email del user reactivo) ---------- */
+const MisReservas = ({ user }) => {
   const [lista, setLista] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
+  const [cancellingId, setCancellingId] = useState(null);
 
-  const email = getUsuarioActual()?.email || "";
+  const email = user?.email || "";
 
   const cargar = async () => {
     if (!email) {
       setError("Inicia sesión para ver tus reservas.");
+      setLista([]);
       return;
     }
     setError("");
@@ -279,55 +331,118 @@ const MisReservas = () => {
     try {
       const url = `http://localhost:8000/hotel/mis_reservas/?email=${encodeURIComponent(email)}`;
       const r = await fetch(url);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const data = await r.json();
-      if (data.success) setLista(data.reservas);
-      else setError(data.error || "No se pudieron cargar las reservas.");
+      if (data.success) setLista(data.reservas || []);
+      else { setError(data.error || "No se pudieron cargar las reservas."); setLista([]); }
     } catch (e) {
       setError("Error de conexión al cargar reservas.");
+      setLista([]);
     } finally {
       setCargando(false);
     }
   };
 
-  useEffect(() => { cargar(); }, []); // carga al montar
+  useEffect(() => { cargar(); /* eslint-disable-next-line */ }, [email]);
+
+  const puedeCancelar = (reserva) => {
+  const estado = (reserva.estado || "").toLowerCase();
+  // estados que sí permiten cancelación
+  if (!["pendiente", "pagada", "confirmada"].includes(estado)) return false;
+
+  const entrada = new Date(reserva.entrada || reserva.fecha_entrada || reserva.fecha);
+  if (isNaN(entrada)) return false; // por seguridad si viene mal la fecha
+
+  const horasFaltantes = (entrada.getTime() - Date.now()) / 36e5; // ms -> horas
+  return horasFaltantes >= 48; // solo si faltan 48h o más
+};
+  const cancelarReserva = async (reserva) => {
+    if (!email) return;
+    const confirmado = window.confirm(`¿Deseas cancelar la reserva de "${reserva.habitacion}" para el ${new Date(reserva.entrada || reserva.fecha_entrada).toLocaleString()}?`);
+    if (!confirmado) return;
+
+    try {
+      setCancellingId(reserva.id);
+      const r = await fetch("http://localhost:8000/hotel/cancelar_reserva/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: reserva.id, email }),
+      });
+      const data = await r.json();
+      if (data.success) {
+        // Actualiza en memoria sin recargar todo
+        setLista((prev) => prev.map(item =>
+          item.id === reserva.id ? { ...item, estado: "cancelada" } : item
+        ));
+        alert("Reserva cancelada.");
+      } else {
+        alert(data.error || "No se pudo cancelar la reserva.");
+      }
+    } catch (e) {
+      alert("Error de conexión al cancelar.");
+    } finally {
+      setCancellingId(null);
+    }
+  };
 
   return (
     <div className="gran-wrapper" style={{ marginTop: 16 }}>
       <h2 className="texto">Mis reservas</h2>
       <p className="subtexto">Asociadas a: <b>{email || "(sin correo)"}</b></p>
       <div style={{ margin: "8px 0" }}>
-        <button className="btn-primario" onClick={cargar}>Actualizar</button>
+        <button className="btn-primario" onClick={cargar} disabled={cargando || !email}>
+          {cargando ? "Actualizando..." : "Actualizar"}
+        </button>
       </div>
+
       {error && <p className="error">{error}</p>}
-      {cargando && <p className="subtexto">Cargando…</p>}
       {!cargando && !error && lista.length === 0 && (
         <p className="subtexto">No tienes reservas registradas.</p>
       )}
 
       <div className="grid-habitaciones" style={{ marginTop: 10 }}>
-        {lista.map((r) => (
-          <div key={r.id} className="card-habitacion">
-            <div className="card-body">
-              <h3 className="card-title">{r.habitacion}</h3>
-              <p className="card-desc">
-                Entrada: {new Date(r.entrada).toLocaleString()}<br/>
-                Salida: {new Date(r.salida).toLocaleString()}
-              </p>
-              <div className="card-meta">
-                <span>Estado: <b>{r.estado}</b></span>
-                <span>Total: <b>${r.monto_total}</b></span>
-              </div>
-              {r.codigo_qr && (
-                <p className="subtexto" style={{ marginTop: 6 }}>
-                  QR: <b>{r.codigo_qr}</b>
+        {lista.map((r) => {
+          const cancelable = puedeCancelar(r);
+          const enCancelacion = cancellingId === r.id;
+          return (
+            <div key={r.id} className="card-habitacion">
+              <div className="card-body">
+                <h3 className="card-title">{r.habitacion}</h3>
+                <p className="card-desc">
+                  Entrada: {new Date(r.entrada || r.fecha_entrada).toLocaleString()}<br/>
+                  Salida: {new Date(r.salida || r.fecha_salida).toLocaleString()}
                 </p>
-              )}
+                <div className="card-meta">
+                  <span>Estado: <b style={{ textTransform:"capitalize" }}>{r.estado}</b></span>
+                  <span>Total: <b>${r.monto_total || r.total}</b></span>
+                </div>
+
+                <div style={{ marginTop: 10, display:"flex", gap:8 }}>
+                 <button
+                    className="btn-cancelar"
+                    disabled={!cancelable || enCancelacion}
+                    onClick={() => cancelarReserva(r)}
+                    title={
+                      cancelable
+                        ? "Cancelar esta reserva (permitido hasta 48h antes)"
+                        : "No puedes cancelar: debe faltarte al menos 48 horas y el estado debe ser pendiente/pagada/confirmada"
+                    }
+                  >
+                    {enCancelacion ? "Cancelando..." : "Cancelar reserva"}
+                  </button>
+                </div>
+
+                {r.codigo_qr && (
+                  <p className="subtexto" style={{ marginTop: 6 }}>
+                    QR: <b>{r.codigo_qr}</b>
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 };
-
 export default ReservasCliente;

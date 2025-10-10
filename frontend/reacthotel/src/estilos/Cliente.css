@@ -48,7 +48,19 @@
   border: 1px solid #e5e7eb;
   opacity: 1;              /* evita que herede opacidad baja de otros estilos */
 }
-
+.btn-pagar {
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: #0ea5e9;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .08s ease, box-shadow .12s ease, background .12s ease;
+  box-shadow: 0 8px 18px rgba(14,165,233,.35);
+}
+.btn-pagar:hover:not(:disabled) { background: #0392d5; transform: translateY(-1px); }
+.btn-pagar:disabled { background: #94a3b8; cursor: not-allowed; box-shadow: none; }
 
 .cliente-container {
   min-height: 100vh;

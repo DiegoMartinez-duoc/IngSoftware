@@ -7,6 +7,7 @@ import uuid
 from django.db.models import Q, Sum
 from datetime import datetime, timedelta, timezone
 from django.utils import timezone
+from django.utils import timezone  
 from uuid import uuid4  # <-- en la cabecera del archivo
 
 from django.views.decorators.csrf import csrf_exempt
@@ -145,12 +146,22 @@ def login(request):
 # Reserva para cliente
 # -----------------------
 # views.py
+def to_bool(v):
+    """Convierte 'true'/'false'/1/0/True/False a booleano real."""
+    if isinstance(v, bool):
+        return v
+    if v is None:
+        return False
+    s = str(v).strip().lower()
+    return s in ("true", "1", "yes", "y", "on")
+
+@csrf_exempt
 @api_view(['POST'])
 def reservar(request):
     try:
         data = request.data
 
-        # 1) Resolver habitación por id o por nombre (compatibilidad)
+        # 1) Resolver habitación por id o por nombre
         habitacion = None
         if data.get('habitacion_id'):
             habitacion = Habitacion.objects.get(id=data['habitacion_id'])
@@ -161,11 +172,17 @@ def reservar(request):
 
         # 2) Fechas (si no envían 'fecha', usar hoy; asumimos 1 noche)
         if data.get('fecha'):
-            # soporta 'YYYY-MM-DD' o ISO
+            # soporta 'YYYY-MM-DD' (del front) o ISO
             fecha_str = str(data['fecha']).split('T')[0]
-            entrada = datetime.fromisoformat(fecha_str)
+            # naive -> vuelve aware con la tz de Django
+            entrada_naive = datetime.strptime(fecha_str, "%Y-%m-%d")
+            entrada = timezone.make_aware(
+                entrada_naive,
+                timezone=timezone.get_default_timezone()  # o get_current_timezone()
+            )
         else:
             entrada = timezone.now()
+
         salida = entrada + timedelta(days=1)
 
         # 3) Usuario (crea si no existe)
@@ -175,46 +192,66 @@ def reservar(request):
                 "nombre": data.get("nombre", "Cliente"),
                 "contrasena": "temporal123",
                 "telefono": data.get("telefono", ""),
-                "rol_id": Rol.objects.get(id=1)
+                "rol_id": Rol.objects.get(id=1),
             }
         )
 
-        # 4) Monto simple por noche
-        monto = int(habitacion.precio_por_noche)
+        # 4) Monto simple por noche (tu campo es CharField)
+        try:
+            precio_noche = int(habitacion.precio_por_noche)
+        except Exception:
+            return JsonResponse({"success": False, "error": "Precio inválido en habitación"}, status=500)
+        total = precio_noche * 1  # 1 noche
 
-        # 5) Crear reserva + pago
-        codigo_qr = f"QR-{uuid.uuid4()}"
-        nueva_reserva = Reserva.objects.create(
+        # 5) Flag y método de pago
+        pagar_ahora = to_bool(data.get("pagarAhora"))
+        metodo = (data.get("metodoPago") or "").strip().lower()
+
+        if pagar_ahora and metodo not in {"webpay", "tarjeta", "paypal"}:
+            return JsonResponse({"success": False, "error": "Método de pago inválido o faltante."}, status=400)
+
+        # 6) Estado según flag
+        estado = "confirmada" if pagar_ahora else "pendiente"
+
+        # 7) Crear reserva
+        reserva = Reserva.objects.create(
             id_usuario=usuario,
             id_habitacion=habitacion,
             entrada=entrada,
             salida=salida,
-            monto_total=monto,
-            estado="confirmada",
-            codigo_qr=codigo_qr
+            monto_total=total,
+            estado=estado,
+            codigo_qr=f"QR-{uuid4()}",
         )
 
-        pago = Pagos.objects.create(
-            id_reserva=nueva_reserva,
-            monto=monto,
-            metodo_de_pago=data.get('metodoPago', 'tarjeta'),
-            id_transaccion=str(uuid.uuid4()),
-            estado="aprobado"
-        )
-
-        return JsonResponse({
-            "success": True,
-            "mensaje": "Reserva completada",
-            "codigoQR": nueva_reserva.codigo_qr,
-            "total": nueva_reserva.monto_total,
-            "habitacion": habitacion.nombre,
-            "fecha_entrada": str(nueva_reserva.entrada.date()),
-            "fecha_salida": str(nueva_reserva.salida.date()),
-            "pago": {
+        # 8) Si paga ahora, crear registro en Pagos
+        pago_info = None
+        if pagar_ahora:
+            id_tx = f"TX-{uuid4()}"
+            pago = Pagos.objects.create(
+                id_reserva=reserva,
+                monto=total,
+                metodo_de_pago=metodo,
+                id_transaccion=id_tx,
+                estado="aprobado",
+            )
+            pago_info = {
                 "metodo": pago.metodo_de_pago,
                 "estado": pago.estado,
-                "id_transaccion": pago.id_transaccion
+                "id_transaccion": pago.id_transaccion,
             }
+
+        # 9) Respuesta
+        return JsonResponse({
+            "success": True,
+            "mensaje": "Reserva creada correctamente",
+            "estado": reserva.estado,  # <- 'pendiente' o 'confirmada'
+            "habitacion": habitacion.nombre,
+            "fecha_entrada": reserva.entrada.isoformat(),
+            "fecha_salida": reserva.salida.isoformat(),
+            "total": total,
+            "codigoQR": reserva.codigo_qr,
+            "pago": pago_info,
         })
 
     except Habitacion.DoesNotExist:

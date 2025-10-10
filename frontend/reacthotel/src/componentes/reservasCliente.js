@@ -5,8 +5,8 @@ import "../estilos/Cliente.css";
 const readUser = () => {
   try {
     const raw =
-      localStorage.getItem("user") ||           // NUEVA clave
-      localStorage.getItem("usuarioActual");    // compatibilidad
+      localStorage.getItem("user") ||
+      localStorage.getItem("usuarioActual");
     if (!raw) return null;
     const u = JSON.parse(raw);
     return {
@@ -46,10 +46,9 @@ const ReservasCliente = () => {
     const refresh = () => setUser(readUser());
     refresh();
     const onStorage = (e) => {
-      // si cambia 'user' o la antigua 'usuarioActual', refresca
       if (!e || !e.key || ["user", "usuarioActual"].includes(e.key)) refresh();
     };
-    const onFocus = () => refresh(); // al volver de Login/Registro
+    const onFocus = () => refresh();
     window.addEventListener("storage", onStorage);
     window.addEventListener("focus", onFocus);
     return () => {
@@ -130,7 +129,7 @@ const ReservasCliente = () => {
       const data = await r.json();
       if (data.success) {
         setReservaConfirmada(data);
-        setRefreshKey((k) => k + 1); // <<< refresca "Mis reservas"
+        setRefreshKey((k) => k + 1); // refresca "Mis reservas"
         nextStep();
       } else {
         setError("No se pudo completar la reserva: " + (data.error || "Error desconocido"));
@@ -245,50 +244,51 @@ const ReservasCliente = () => {
             <button className="btn-primario" onClick={handleValidar}>Validar datos</button>
           </>
         )}
-{step === 5 && (
-  <>
-    {formData.pagarAhora ? (
-      <>
-        <p className="subtexto">Selecciona método de pago</p>
-        <select
-          name="metodoPago"
-          value={formData.metodoPago}
-          onChange={handleChange}
-          aria-label="Método de pago"
-        >
-          <option value="">--Seleccione--</option>
-          <option value="webpay">WebPay</option>
-          <option value="tarjeta">Tarjeta</option>
-          <option value="paypal">PayPal</option>
-        </select>
-        <p className="subtexto" style={{ marginTop: 6 }}>
-          Puedes cambiar a “pagar después” desmarcando la opción en el paso anterior.
-        </p>
-      </>
-    ) : (
-      <p className="subtexto" style={{ color:"#0f172a" }}>
-        Se registrará tu reserva como <b>pendiente</b>. Podrás pagar más tarde desde tu historial
-        o en recepción.
-      </p>
-    )}
 
-    {error && <p className="error">{error}</p>}
+        {step === 5 && (
+          <>
+            {formData.pagarAhora ? (
+              <>
+                <p className="subtexto">Selecciona método de pago</p>
+                <select
+                  name="metodoPago"
+                  value={formData.metodoPago}
+                  onChange={handleChange}
+                  aria-label="Método de pago"
+                >
+                  <option value="">--Seleccione--</option>
+                  <option value="webpay">WebPay</option>
+                  <option value="tarjeta">Tarjeta</option>
+                  <option value="paypal">PayPal</option>
+                </select>
+                <p className="subtexto" style={{ marginTop: 6 }}>
+                  Puedes cambiar a “pagar después” desmarcando la opción en el paso anterior.
+                </p>
+              </>
+            ) : (
+              <p className="subtexto" style={{ color:"#0f172a" }}>
+                Se registrará tu reserva como <b>pendiente</b>. Podrás pagar más tarde desde tu historial
+                o en recepción.
+              </p>
+            )}
 
-    <button className="btn-secundario" onClick={prevStep}>Atrás</button>
-    <button
-      className="btn-primario"
-      onClick={handleReservar}
-      disabled={formData.pagarAhora && !formData.metodoPago}  // ⬅️ clave
-      title={
-        formData.pagarAhora && !formData.metodoPago
-          ? "Selecciona un método de pago para continuar"
-          : (formData.pagarAhora ? "Proceder al pago" : "Confirmar sin pagar")
-      }
-    >
-      {formData.pagarAhora ? "Proceder al pago" : "Confirmar reserva sin pagar"}
-    </button>
-  </>
-)}
+            {error && <p className="error">{error}</p>}
+
+            <button className="btn-secundario" onClick={prevStep}>Atrás</button>
+            <button
+              className="btn-primario"
+              onClick={handleReservar}
+              disabled={formData.pagarAhora && !formData.metodoPago}
+              title={
+                formData.pagarAhora && !formData.metodoPago
+                  ? "Selecciona un método de pago para continuar"
+                  : (formData.pagarAhora ? "Proceder al pago" : "Confirmar sin pagar")
+              }
+            >
+              {formData.pagarAhora ? "Proceder al pago" : "Confirmar reserva sin pagar"}
+            </button>
+          </>
+        )}
 
         {step === 6 && reservaConfirmada && (
           <>
@@ -305,18 +305,19 @@ const ReservasCliente = () => {
         )}
       </div>
 
-      {/* MIS RESERVAS (ahora usa user REACTIVO) */}
+      {/* MIS RESERVAS (usa user REACTIVO) */}
       <MisReservas key={refreshKey} user={user} />
     </div>
   );
 };
 
-/* ---------- Subcomponente: MisReservas (lee email del user reactivo) ---------- */
+/* ---------- Subcomponente: MisReservas (historial + pagar/cancelar) ---------- */
 const MisReservas = ({ user }) => {
   const [lista, setLista] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const [cancellingId, setCancellingId] = useState(null);
+  const [payingId, setPayingId] = useState(null); // NEW
 
   const email = user?.email || "";
 
@@ -345,20 +346,32 @@ const MisReservas = ({ user }) => {
 
   useEffect(() => { cargar(); /* eslint-disable-next-line */ }, [email]);
 
+  // Normaliza estado para comparar (quita tildes/espacios y a minúsculas)
+  const norm = (s) =>
+    (s ?? "")
+      .toString()
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      .trim()
+      .toLowerCase();
+
+  // Regla de cancelación: estados válidos + 48h antes de la entrada
   const puedeCancelar = (reserva) => {
-  const estado = (reserva.estado || "").toLowerCase();
-  // estados que sí permiten cancelación
-  if (!["pendiente", "pagada", "confirmada"].includes(estado)) return false;
+    const estado = norm(reserva.estado);
+    if (!["pendiente", "pagada", "confirmada"].includes(estado)) return false;
 
-  const entrada = new Date(reserva.entrada || reserva.fecha_entrada || reserva.fecha);
-  if (isNaN(entrada)) return false; // por seguridad si viene mal la fecha
+    const entrada = new Date(reserva.entrada || reserva.fecha_entrada || reserva.fecha);
+    if (isNaN(entrada)) return false;
 
-  const horasFaltantes = (entrada.getTime() - Date.now()) / 36e5; // ms -> horas
-  return horasFaltantes >= 48; // solo si faltan 48h o más
-};
+    const horasFaltantes = (entrada.getTime() - Date.now()) / 36e5;
+    return horasFaltantes >= 48;
+  };
+
   const cancelarReserva = async (reserva) => {
     if (!email) return;
-    const confirmado = window.confirm(`¿Deseas cancelar la reserva de "${reserva.habitacion}" para el ${new Date(reserva.entrada || reserva.fecha_entrada).toLocaleString()}?`);
+    const confirmado = window.confirm(
+      `¿Deseas cancelar la reserva de "${reserva.habitacion}" para el ${new Date(reserva.entrada || reserva.fecha_entrada).toLocaleString()}?`
+    );
     if (!confirmado) return;
 
     try {
@@ -370,7 +383,6 @@ const MisReservas = ({ user }) => {
       });
       const data = await r.json();
       if (data.success) {
-        // Actualiza en memoria sin recargar todo
         setLista((prev) => prev.map(item =>
           item.id === reserva.id ? { ...item, estado: "cancelada" } : item
         ));
@@ -382,6 +394,44 @@ const MisReservas = ({ user }) => {
       alert("Error de conexión al cancelar.");
     } finally {
       setCancellingId(null);
+    }
+  };
+
+  // === Pagar reserva pendiente ===
+  const pagarReserva = async (reserva) => {
+    if (!email) return;
+    const confirmado = window.confirm(
+      `¿Deseas pagar ahora la reserva de "${reserva.habitacion}"?\n` +
+      `Entrada: ${new Date(reserva.entrada || reserva.fecha_entrada).toLocaleString()}`
+    );
+    if (!confirmado) return;
+
+    try {
+      setPayingId(reserva.id);
+      const r = await fetch("http://localhost:8000/hotel/pagar_reserva/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: reserva.id,
+          email,
+          metodoPago: "webpay", // o "tarjeta"/"paypal"
+        }),
+      });
+      const data = await r.json();
+      if (data.success) {
+        setLista((prev) =>
+          prev.map((it) =>
+            it.id === reserva.id ? { ...it, estado: "confirmada" } : it
+          )
+        );
+        alert("Pago realizado con éxito. ¡Reserva confirmada!");
+      } else {
+        alert(data.error || "No se pudo procesar el pago.");
+      }
+    } catch {
+      alert("Error de conexión al pagar.");
+    } finally {
+      setPayingId(null);
     }
   };
 
@@ -404,6 +454,8 @@ const MisReservas = ({ user }) => {
         {lista.map((r) => {
           const cancelable = puedeCancelar(r);
           const enCancelacion = cancellingId === r.id;
+          const esPendiente = norm(r.estado) === "pendiente";
+
           return (
             <div key={r.id} className="card-habitacion">
               <div className="card-body">
@@ -417,19 +469,30 @@ const MisReservas = ({ user }) => {
                   <span>Total: <b>${r.monto_total || r.total}</b></span>
                 </div>
 
-                <div style={{ marginTop: 10, display:"flex", gap:8 }}>
-                 <button
+                <div style={{ marginTop: 10, display:"flex", gap:8, flexWrap:"wrap" }}>
+                  <button
                     className="btn-cancelar"
                     disabled={!cancelable || enCancelacion}
                     onClick={() => cancelarReserva(r)}
                     title={
                       cancelable
                         ? "Cancelar esta reserva (permitido hasta 48h antes)"
-                        : "No puedes cancelar: debe faltarte al menos 48 horas y el estado debe ser pendiente/pagada/confirmada"
+                        : "No puedes cancelar: faltan menos de 48h o el estado no lo permite"
                     }
                   >
                     {enCancelacion ? "Cancelando..." : "Cancelar reserva"}
                   </button>
+
+                  {esPendiente && (
+                    <button
+                      className="btn-pagar"
+                      disabled={payingId === r.id}
+                      onClick={() => pagarReserva(r)}
+                      title="Pagar ahora y confirmar"
+                    >
+                      {payingId === r.id ? "Procesando pago…" : "Pagar ahora"}
+                    </button>
+                  )}
                 </div>
 
                 {r.codigo_qr && (
@@ -445,4 +508,5 @@ const MisReservas = ({ user }) => {
     </div>
   );
 };
+
 export default ReservasCliente;

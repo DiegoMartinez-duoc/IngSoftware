@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import "../estilos/Empleado.css";
 
+const API_BASE = "http://localhost:8000/hotel";
+const MEDIA_BASE = "http://localhost:8000/media/";
+
 const CatalogoEmpleado = ({ onLogout }) => {
   const [habitaciones, setHabitaciones] = useState([]);
   const [formData, setFormData] = useState({
@@ -15,34 +18,33 @@ const CatalogoEmpleado = ({ onLogout }) => {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [habitacionSeleccionada, setHabitacionSeleccionada] = useState(null);
+  const [loading, setLoading] = useState(true);
 
- 
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // --------------------------
-  // Consultar habitaciones
-  // --------------------------
+  // Cargar habitaciones desde la API igual que en reservasEmpleado.js
   useEffect(() => {
     const fetchHabitaciones = async () => {
       try {
-        const res = await fetch("http://localhost:8000/hotel/habitaciones/");
+        const res = await fetch(`${API_BASE}/listar_habitaciones/`);
+        if (!res.ok) throw new Error("No se pudieron cargar las habitaciones");
         const data = await res.json();
         if (data.success) {
-          setHabitaciones(data.habitaciones);
+          setHabitaciones(data.habitaciones || []);
         } else {
-          setError(data.error || "Error al cargar habitaciones");
+          setHabitaciones([]);
         }
       } catch (err) {
-        setError("Error de conexión con backend");
+        setHabitaciones([]);
+      } finally {
+        setLoading(false);
       }
     };
     fetchHabitaciones();
   }, []);
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   // --------------------------
   // Reservar para un cliente
@@ -105,7 +107,23 @@ const CatalogoEmpleado = ({ onLogout }) => {
                 gridTemplateColumns: "repeat(3, 1fr)",
                 gap: "20px"
               }}>
-                {habitaciones.length === 0 ? (
+                {loading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="habitacion-card" style={{ border: "1px solid #ccc", borderRadius: "10px", padding: "10px" }}>
+                      <img
+                        src="/img/habitacion-default.jpg"
+                        alt="Habitación predeterminada"
+                        style={{ width: "100%", height: "200px", objectFit: "cover", borderRadius: "8px" }}
+                      />
+                      <div style={{ marginTop: "10px", textAlign: "center" }}>
+                        <p>🛏 Precio</p>
+                        <small>Título de la habitación</small>
+                        <br />
+                        <button style={{ marginTop: "10px" }} disabled>Ver</button>
+                      </div>
+                    </div>
+                  ))
+                ) : habitaciones.length === 0 ? (
                   <div className="habitacion-card" style={{ border: "1px solid #ccc", borderRadius: "10px", padding: "10px" }}>
                     <img
                       src="/img/habitacion-default.jpg"
@@ -116,19 +134,16 @@ const CatalogoEmpleado = ({ onLogout }) => {
                       <p>🛏 Precio</p>
                       <small>Título de la habitación</small>
                       <br />
-                      <button
-                        style={{ marginTop: "10px" }}
-                        onClick={() => setHabitacionSeleccionada({})}
-                      >Ver</button>
+                      <button style={{ marginTop: "10px" }} disabled>Ver</button>
                     </div>
                   </div>
                 ) : (
                   habitaciones.slice(0, 3).map((h) => (
                     <div key={h.id} className="habitacion-card" style={{ border: "1px solid #ccc", borderRadius: "10px", padding: "10px" }}>
                       <img
-                        src={`http://localhost:8000/media/${h.imagen}`}
+                        src={h.imagen ? `${MEDIA_BASE}${h.imagen}` : "/img/habitacion-default.jpg"}
                         alt={h.nombre}
-                        style={{ width: "60px", height: "60px", objectFit: "cover", borderRadius: "8px" }}
+                        style={{ width: "100%", height: "200px", objectFit: "cover", borderRadius: "8px" }}
                       />
                       <div style={{ marginTop: "10px", textAlign: "center" }}>
                         <p>🛏 {h.precio ? `$${h.precio}` : "Precio"}</p>
@@ -167,7 +182,7 @@ const CatalogoEmpleado = ({ onLogout }) => {
                     habitaciones.slice(0, 4).map((h) => (
                       <li key={h.id}>
                         <img
-                            src={`http://localhost:8000/media/${h.imagen}`}
+                            src={h.imagen ? `${MEDIA_BASE}${h.imagen}` : "/img/habitacion-default.jpg"}
                             alt={h.nombre}
                             style={{ width: "60px", height: "60px", objectFit: "cover", borderRadius: "8px" }}
                         />
@@ -191,7 +206,7 @@ const CatalogoEmpleado = ({ onLogout }) => {
                         style={{ width: "200px", height: "120px", objectFit: "cover", display: "block", margin: "0 auto", borderRadius: "8px" }}
                       />
                       <div style={{ marginTop: "5px" }}>
-                        <strong>Precio</strong>
+                        <strong>Precio de la habitación</strong>
                         <br />
                         <span>Título de la habitación</span>
                       </div>
@@ -200,7 +215,7 @@ const CatalogoEmpleado = ({ onLogout }) => {
                     habitaciones.map((h) => (
                       <img
                         key={h.id}
-                        src={`http://localhost:8000/media/${h.imagen}`}
+                        src={h.imagen ? `${MEDIA_BASE}${h.imagen}` : "/img/habitacion-default.jpg"}
                         alt={h.nombre}
                         className="carrusel-img"
                         style={{ width: "60px", height: "60px", objectFit: "cover", borderRadius: "8px" }}
@@ -321,7 +336,7 @@ const CatalogoEmpleado = ({ onLogout }) => {
                 <h3>{habitacionSeleccionada.nombre || "Título de la habitación"}</h3>
                 <img
                   src={
-                    habitacionSeleccionada.id
+                    habitacionSeleccionada.imagen
                       ? `http://localhost:8000/media/${habitacionSeleccionada.imagen}`
                       : "/img/habitacion-default.jpg"
                   }
@@ -332,6 +347,13 @@ const CatalogoEmpleado = ({ onLogout }) => {
                   {habitacionSeleccionada.descripcion ||
                     "Descripción de la habitación. Aquí se mostrará información relevante sobre la habitación seleccionada, aunque no haya datos disponibles aún."}
                 </p>
+                {/* Mostrar datos de la habitación seleccionada en formato predeterminado si no hay datos */}
+                <div style={{ marginTop: "10px", color: "#888" }}>
+                  <div><strong>Capacidad:</strong> {habitacionSeleccionada.capacidad || "No especificado"}</div>
+                  <div><strong>Precio:</strong> {habitacionSeleccionada.precio ? `$${habitacionSeleccionada.precio}` : "No especificado"}</div>
+                  <div><strong>Tipo:</strong> {habitacionSeleccionada.tipo || "No especificado"}</div>
+                  <div><strong>Estado:</strong> {habitacionSeleccionada.estado || "No especificado"}</div>
+                </div>
               </div>
 
               {/* CENTRO */}
@@ -419,7 +441,7 @@ const CatalogoEmpleado = ({ onLogout }) => {
                     habitaciones.map((h) => (
                       <img
                         key={h.id}
-                        src={`http://localhost:8000/media/${h.imagen}`}
+                        src={h.imagen ? `${MEDIA_BASE}${h.imagen}` : "/img/habitacion-default.jpg"}
                         alt={h.nombre}
                         className="carrusel-img"
                         style={{ width: "80px", height: "80px", objectFit: "cover", display: "flex", margin: "0 auto" }}

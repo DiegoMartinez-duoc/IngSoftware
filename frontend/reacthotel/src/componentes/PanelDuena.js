@@ -1,16 +1,72 @@
 import React, { useEffect, useState } from 'react';
 import '../estilos/PanelDuena.css';
 
+const API_BASE = "http://localhost:8000/hotel";
+const MEDIA_BASE = "http://localhost:8000/media/";
+
 const PanelDuena = ({ onLogout }) => {
   const [usuarios, setUsuarios] = useState([]);
+  const [empleados, setEmpleados] = useState([]);
+  const [clientesReserva, setClientesReserva] = useState([]);
   const [reservas, setReservas] = useState([]);
   const [reportes, setReportes] = useState([]);
   const [error, setError] = useState(null);
   const [showReservas, setShowReservas] = useState(false);
   const [showUsuarios, setShowUsuarios] = useState(false);
   const [habitaciones, setHabitaciones] = useState([]);
-  // Nueva: para mostrar detalle de habitación
   const [habitacionSeleccionada, setHabitacionSeleccionada] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Cargar usuarios y empleados
+  const fetchUsuarios = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/usuarios/`);
+      const data = await res.json();
+      if (data.success) {
+        setUsuarios(data.clientes || []);
+        setEmpleados(data.empleados || []);
+        setClientesReserva(data.clientes || []);
+      }
+    } catch (err) {
+      setError("Error de conexión con backend");
+    }
+  };
+
+  // Cargar reservas confirmadas
+  const fetchReservas = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/reservas/confirmadas/`);
+      const data = await res.json();
+      if (data.success) {
+        setReservas(data.reservas || []);
+      }
+    } catch (err) {
+      setReservas([]);
+    }
+  };
+
+  // Cargar habitaciones
+  useEffect(() => {
+    const fetchHabitaciones = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/listar_habitaciones/`);
+        if (!res.ok) throw new Error("No se pudieron cargar las habitaciones");
+        const data = await res.json();
+        if (data.success) {
+          setHabitaciones(data.habitaciones || []);
+        } else {
+          setHabitaciones([]);
+        }
+      } catch (err) {
+        setHabitaciones([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHabitaciones();
+    fetchUsuarios();
+    fetchReservas();
+  }, []);
 
   // Para la barra de disponibilidad
   const porcentajeDisponibles = () => {
@@ -19,43 +75,12 @@ const PanelDuena = ({ onLogout }) => {
     return Math.round((disponibles / habitaciones.length) * 100);
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const resUsuarios = await fetch('http://localhost:8000/usuarios/');
-        const dataUsuarios = await resUsuarios.json();
-        setUsuarios(dataUsuarios.usuarios || []);
-
-        const resReservas = await fetch('http://localhost:8000/duena/reservas/');
-        const dataReservas = await resReservas.json();
-        setReservas(dataReservas.reservas || []);
-
-        const resHabitaciones = await fetch('http://localhost:8000/hotel/habitaciones/');
-        const dataHabitaciones = await resHabitaciones.json();
-        setHabitaciones(dataHabitaciones.habitaciones || []);
-
-        const resReportes = await fetch('http://localhost:8000/duena/reportes/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tipo: 'ventas', inicio: '2025-01-01', fin: '2025-12-31' })
-        });
-        const dataReportes = await resReportes.json();
-        if (dataReportes.success) setReportes([dataReportes.reporte]);
-      } catch (err) {
-        setError(err.message);
-      }
-    };
-
-    fetchData();
-  }, []);
-
   return (
     <div className="panel-duena-container">
-      <div className="duena-wrapper">
       <header className="panel-duena-header">
         <h1>Panel de Propietaria/o</h1>
         <p>Gestión global del sistema: usuarios, reservas y reportes</p>
-        {/* {error && <p className="error">{error}</p>} */}
+        {error && <p className="error">{error}</p>}
       </header>
 
       {/* ================== VISTA DETALLE HABITACIÓN ================== */}
@@ -132,13 +157,22 @@ const PanelDuena = ({ onLogout }) => {
               <p>Reservas en el año: <strong>0</strong></p>
               <p>Reservas actuales: <strong>0</strong></p>
             </div>
+          <button onClick={() => setHabitacionSeleccionada(false)} style={{ background: "#732d91", color: "#fff", borderRadius: "6px", border: "none", padding: "8px 18px", marginRight: "10px" }}>Atrás</button>
+            <button onClick={onLogout} style={{ background: "#fff", color: "#732d91", border: "2px solid #732d91", borderRadius: "6px", padding: "8px 18px" }}>Cerrar sesión</button>
           </div>
         </div>
       )}
 
       {/* ================== VISTA PRINCIPAL ================== */}
       {!showReservas && !showUsuarios && !habitacionSeleccionada && (
-        <div className="panel-duena-grid">
+        <div className="panel-duena-grid" style={{
+          display: "flex",
+          flexDirection: "row",
+          gap: "24px",
+          justifyContent: "center",
+          alignItems: "stretch",
+          marginTop: "32px"
+        }}>
           <div className="panel-duena-card">
             <h2>Gestión de Usuarios</h2>
             <p>Total usuarios: {usuarios.length}</p>
@@ -190,40 +224,139 @@ const PanelDuena = ({ onLogout }) => {
         <div className="usuarios-dashboard" style={{ display: "grid", gridTemplateColumns: "2fr 1.5fr 1fr", gap: "20px", marginTop: "20px", color: "#732d91"  }}>
           {/* IZQUIERDA */}
           <div style={{ background: "#fff", padding: "16px", borderRadius: "12px" }}>
-            <h3>Indicadores de gestión del mes</h3>
-            <div className="chart-box">📈 Actividad de clientes</div>
-            <div className="chart-box">📈 Actividad de empleados</div>
-            <div className="chart-box">📈 Ingresos del mes</div>
+            <h3>Clientes</h3>
+            <div className="usuarios-grid">
+              {usuarios.length === 0 ? (
+                <div className="usuario-card">
+                  <div className="usuario-info">
+                    <strong>Nombre</strong>
+                    <br />correo@correo.com<br />000000000<br />Rol: cliente
+                  </div>
+                </div>
+              ) : (
+                usuarios.map((u) => (
+                  <div className="usuario-card" key={u.id}>
+                    <div className="usuario-info">
+                      <strong>{u.nombre}</strong>
+                      <br />{u.email}<br />{u.telefono}<br />Rol: {u.rol}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            <h3>Empleados</h3>
+            <div className="usuarios-grid">
+              {empleados.length === 0 ? (
+                <div className="usuario-card">
+                  <div className="usuario-info">
+                    <strong>Nombre</strong>
+                    <br />correo@correo.com<br />000000000<br />Rol: empleado
+                  </div>
+                </div>
+              ) : (
+                empleados.map((u) => (
+                  <div className="usuario-card" key={u.id}>
+                    <div className="usuario-info">
+                      <strong>{u.nombre}</strong>
+                      <br />{u.email}<br />{u.telefono}<br />Rol: {u.rol}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
           {/* CENTRO */}
           <div style={{ background: "#fff", padding: "16px", borderRadius: "12px" }}>
-            <h3>Calificación promedio del hotel ⭐⭐⭐⭐⭐</h3>
-            <div className="comentarios">
-              <h4>Comentarios recientes</h4>
-              {[1,2,3,4,5].map(i => (
-                <div key={i} className="comentario-item">👤 Nombre - Comentario ejemplo</div>
-              ))}
+            <h3>Clientes con reserva</h3>
+            <div className="usuarios-grid">
+              {clientesReserva.length === 0 ? (
+                <div className="usuario-card">
+                  <div className="usuario-info">
+                    <strong>Nombre</strong>
+                    <br />correo@correo.com<br />000000000<br />Rol: cliente
+                  </div>
+                </div>
+              ) : (
+                clientesReserva.map((u) => (
+                  <div className="usuario-card" key={u.id}>
+                    <div className="usuario-info">
+                      <strong>{u.nombre}</strong>
+                      <br />{u.email}<br />{u.telefono}<br />Rol: {u.rol}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
-            <h4>Estadísticas de Clientes</h4>
-            <div className="estadisticas-clientes" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
-              <div><h5>Clientes con más reservas</h5> 👤 Nombre - correo</div>
-              <div><h5>Clientes menos activos</h5> 👤 Nombre - correo</div>
-              <div><h5>Empleados menos activos</h5> 👤 Nombre - correo</div>
+            <h3>Clientes más inactivos</h3>
+            <div className="usuarios-grid">
+              {clientesReserva.length === 0 ? (
+                <div className="usuario-card">
+                  <div className="usuario-info">
+                    <strong>Nombre</strong>
+                    <br />correo@correo.com<br />000000000<br />Rol: cliente
+                  </div>
+                </div>
+              ) : (
+                clientesReserva.map((u) => (
+                  <div className="usuario-card" key={u.id}>
+                    <div className="usuario-info">
+                      <strong>{u.nombre}</strong>
+                      <br />{u.email}<br />{u.telefono}<br />Rol: {u.rol}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            <h3>Empleados más inactivos</h3>
+            <div className="usuarios-grid">
+              {empleados.length === 0 ? (
+                <div className="usuario-card">
+                  <div className="usuario-info">
+                    <strong>Nombre</strong>
+                    <br />correo@correo.com<br />000000000<br />Rol: empleado
+                  </div>
+                </div>
+              ) : (
+                empleados.slice(0, 1).map((u) => (
+                  <div className="usuario-card" key={u.id}>
+                    <div className="usuario-info">
+                      <strong>{u.nombre}</strong>
+                      <br />{u.email}<br />{u.telefono}<br />Rol: {u.rol}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
           {/* DERECHA */}
           <div style={{ background: "#fff", padding: "16px", borderRadius: "12px" }}>
             <h4>Habitaciones más reservadas del mes</h4>
-            {[1,2,3].map(i => (
-              <div key={i}>🛏 Habitación {i} - {i*2} reservas</div>
-            ))}
+            {habitaciones.length === 0 ? (
+              <div>🛏 Título de la habitación - 0 reservas</div>
+            ) : (
+              habitaciones.map((h) => {
+                const total = reservas.filter(r => r.habitacion === h.nombre).length;
+                return (
+                  <div key={h.id}>🛏 {h.nombre || "Título de la habitación"} - {total} reservas</div>
+                );
+              })
+            )}
             <h4 style={{ marginTop: "20px" }}>Habitaciones menos reservadas del mes</h4>
-            {[4,5,6].map(i => (
-              <div key={i}>🛏 Habitación {i} - 0 reservas</div>
-            ))}
-          </div>
-          <div style={{ gridColumn: "1 / span 3", marginTop: "20px" }}>
-            <button onClick={() => setShowUsuarios(false)} style={{ background: "#732d91", color: "#fff", padding: "8px 16px", borderRadius: "6px", border: "none" }}>Atrás</button>
+            {habitaciones.length === 0 ? (
+              <div>🛏 Título de la habitación - 0 reservas</div>
+            ) : (
+              habitaciones
+                .map((h) => {
+                  const total = reservas.filter(r => r.habitacion === h.nombre).length;
+                  return { ...h, total };
+                })
+                .filter(h => h.total === 0)
+                .map((h) => (
+                  <div key={h.id}>🛏 {h.nombre || "Título de la habitación"} - 0 reservas</div>
+                ))
+            )}
+          <button onClick={() => setShowUsuarios(false)} style={{ background: "#732d91", color: "#fff", borderRadius: "6px", border: "none", padding: "8px 18px", marginRight: "10px" }}>Atrás</button>
+            <button onClick={onLogout} style={{ background: "#fff", color: "#732d91", border: "2px solid #732d91", borderRadius: "6px", padding: "8px 18px" }}>Cerrar sesión</button>
           </div>
         </div>
       )}
@@ -253,7 +386,7 @@ const PanelDuena = ({ onLogout }) => {
                 reservas.map((r) => (
                   <li key={r.id} className="reserva-item" style={{ color: "#732d91" }}>
                     <img
-                      src={`http://localhost:8000/media/habitaciones/${r.habitacion_id || r.id}.jpg`}
+                      src={r.imagen ? `${MEDIA_BASE}${r.imagen}` : "/img/habitacion-default.jpg"}
                       alt={r.habitacion}
                       className="miniatura-habitacion"
                       style={{ width: "64px", height: "48px", objectFit: "cover", marginRight: "10px", borderRadius: "8px", border: "2px solid #732d91" }}
@@ -323,6 +456,7 @@ const PanelDuena = ({ onLogout }) => {
                 {porcentajeDisponibles()}%
               </div>
             </div>
+            
           </div>
 
           {/* DERECHA */}
@@ -372,10 +506,10 @@ const PanelDuena = ({ onLogout }) => {
             </ul>
 
             <button onClick={() => setShowReservas(false)} style={{ background: "#732d91", color: "#fff", borderRadius: "6px", border: "none", padding: "8px 18px", marginRight: "10px" }}>Atrás</button>
+            <button onClick={onLogout} style={{ background: "#fff", color: "#732d91", border: "2px solid #732d91", borderRadius: "6px", padding: "8px 18px" }}>Cerrar sesión</button>
           </div>
         </div>
       )}
-      </div>
     </div>
   );
 };
